@@ -11,7 +11,8 @@ $oo=json_decode(curl_exec($ch),true);
 curl_close($ch);
 foreach($oo as $k => $v){
   $id=$v[4]; $title=$v[6]; $author=$v[7]; $genre=$v[8]; $tt=str_replace(",","",$v[5]); $score=$v[1];
-  mysqli_query($con,"insert into track (id,time,title,author,genre,score) value ('$id',$tt,'$title','$author','$genre',$score)");
+  echo "insert into track (id,time,title,author,genre,score) values ('$id',$tt,'$title','$author','$genre',$score)\m";
+  mysqli_query($con,"insert into track (id,time,title,author,genre,score) values ('$id',$tt,'$title','$author','$genre',$score)");
 }
 mysqli_close($con);
 
