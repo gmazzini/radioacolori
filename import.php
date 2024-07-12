@@ -1,4 +1,6 @@
 <?php
+include "local.php";
+$con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $access_token=file_get_contents("/home/www/music.mazzini.org/web/access_token");
 $ch=curl_init();
 curl_setopt($ch,CURLOPT_URL,"https://sheets.googleapis.com/v4/spreadsheets/1P3DRLJsepd4gmaYhf2XhqIV4_NIArscaO5Jz1h1pmyU/values/brani!A2:J");
