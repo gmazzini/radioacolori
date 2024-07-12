@@ -1,6 +1,8 @@
 <?php
 include "local.php";
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
+$p1="/home/ices/music/voice/";
+$p2="/home/ices/music/ogg04/";
 
 $query=mysqli_query($con,"select id,tt from track where score=2 order by rand()");
 $ttt=0;
