@@ -2,7 +2,7 @@
 include "local.php";
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 
-$query=mysqli_query($con,"select id,time from track where score=2 order by rand()");
+$query=mysqli_query($con,"select id,tt from track where score=2 order by rand()");
 $ttt=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
