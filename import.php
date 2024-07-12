@@ -16,8 +16,8 @@ foreach($oo["values"] as $k => $v){
   $genre=mysqli_real_escape_string($con,$v[8]); 
   $tt=str_replace(",","",$v[5]);
   $score=$v[1];
-  echo "insert into track (id,time,title,author,genre,score) values ('$id',$tt,'$title','$author','$genre',$score)\m";
-  mysqli_query($con,"insert into track (id,time,title,author,genre,score) values ('$id',$tt,'$title','$author','$genre',$score)");
+  echo "insert into track (id,time,title,author,genre,score) values ('$id',$tt,'$title','$author','$genre',$score)\n";
+  mysqli_query($con,"insert ignore into track (id,time,title,author,genre,score) values ('$id',$tt,'$title','$author','$genre',$score)");
 }
 mysqli_close($con);
 
