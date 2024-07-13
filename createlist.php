@@ -20,12 +20,7 @@ foreach($avoid as $k => $v){
 }
 $listout.=")"; $listin.=")";
 
-echo $listout."\n";
-echo $listin."\n";
-
-exit(1);
-
-$query=mysqli_query($con,"select id,tt from track where score=2 order by rand()");
+$query=mysqli_query($con,"select id,tt from track where score=2 and genre not in $listout order by rand()");
 $ttt=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
