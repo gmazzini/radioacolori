@@ -2,7 +2,7 @@
 include "local.php";
 $special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE");
 $avoid=array("INNOVAZIONE");
-$maxm=10;
+$maxm=7;
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p1="/home/ices/music/voice/";
 $p2="/home/ices/music/ogg04/";
