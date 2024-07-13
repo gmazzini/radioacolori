@@ -6,6 +6,7 @@ $runm=7;
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p1="/home/ices/music/voice/";
 $p2="/home/ices/music/ogg04/";
+$fp=fopen("/home/ices/pl.txt","wt");
 
 $listout="("; $listin="(";
 $co=0;
@@ -80,14 +81,15 @@ for($i=0;$i<$nc;$i++){
       if($iq1>=$nm1)$iq1=0;
       $um1++;
     }
-    echo $p2."$ida.ogg\n";
-    echo $p1."intro.ogg\n";
-    for($j=0;$j<5;$j++)echo $p1."n".substr($ida,$j,1).".ogg\n";
-    echo $p1."coda.ogg\n";
+    fprintf($fp,"%s%s.ogg\n",$p2,$ida);
+    fprintf($fp,"%sintro.ogg\n",$p1);
+    for($j=0;$j<5;$j++)fprintf($fp,"%sn%c.ogg\n",$p1,substr($ida,$j,1));
+    fprintf($fp,"%scoda.ogg\n",$p1);
     $ttt+=$tta;
   }
 }
 mysqli_close($con);
+fclose(£fp);
 echo "$ttt $nm2:$um2 $nm1:$um1 $nc:$uc\n";
 
 ?>
