@@ -44,6 +44,10 @@ for(;;){
 mysqli_free_result($query);
 
 $nq=(int)($nm/$nc);
+
+echo $nq."\n";
+eit(0);
+
 $iq=0;
 $ttt=0;
 for($i=0;$i<$nc;$i++){
