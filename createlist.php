@@ -6,9 +6,13 @@ $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p1="/home/ices/music/voice/";
 $p2="/home/ices/music/ogg04/";
 
+$listout="(";
+$q=""; foreach($special as $k => $v){$listout.="'$v'".$q; $q=",";}
+foreach($avoid as $k => $v){$listout.="'$v'".$q;
 
-$listout=
   $listin= not in ('817','803','495')
+
+    
 $query=mysqli_query($con,"select id,tt from track where score=2 order by rand()");
 $ttt=0;
 for(;;){
