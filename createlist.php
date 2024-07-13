@@ -2,7 +2,7 @@
 include "local.php";
 $special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE");
 $avoid=array("INNOVAZIONE");
-$maxm=7;
+$runm=7;
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p1="/home/ices/music/voice/";
 $p2="/home/ices/music/ogg04/";
@@ -22,24 +22,24 @@ foreach($avoid as $k => $v){
 $listout.=")"; $listin.=")";
 
 $query=mysqli_query($con,"select id,tt from track where score=2 and genre not in $listout order by rand()");
-$nm=0;
+$nm2=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm[$nm]=$row["id"];
-  $ttm[$nm]=$row["tt"];
-  $nm++;
+  $idm2[$nm]=$row["id"];
+  $ttm2[$nm]=$row["tt"];
+  $nm2++;
 }
 mysqli_free_result($query);
 
-$nm2=$nm;
+$nm1=0;
 $query=mysqli_query($con,"select id,tt from track where score=1 and genre not in $listout order by rand()");
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm[$nm]=$row["id"];
-  $ttm[$nm]=$row["tt"];
-  $nm++;
+  $idm1[$nm1]=$row["id"];
+  $ttm1[$nm1]=$row["tt"];
+  $nm1++;
 }
 mysqli_free_result($query);
 
@@ -54,22 +54,28 @@ for(;;){
 }
 mysqli_free_result($query);
 
-$nq=(int)($nm/$nc);
-if($nq>$maxm)$nq=$maxm;
-
-$iq=0;
+$nq1=(int)($nm1/$nc);
+$nq2=(int)($nm2/$nc);
+$iq1=0;
+$iq2=0;
 $ttt=0;
 for($i=0;$i<$nc;$i++){
-  for($q=0;$q<=$nq;$q++){
-    if($q==$nq){
+  for($q=0;$q<=$runm;$q++){
+    if($q==$runm){
       $ida=$idc[$i];
       $tta=$ttc[$i];
     }
+    else if($q<$nq2){
+      $ida=$idm2[$iq2];
+      $tta=$ttm2[$iq2];
+      $iq2++;
+      if($iq2>=$nm2)$iq2=0;
+    }
     else {
-      $ida=$idm[$iq];
-      $tta=$ttm[$iq];
-      $iq++;
-      if($iq>=$nm)$iq=0;
+      $ida=$idm1[$iq1];
+      $tta=$ttm1[$iq1];
+      $iq1++;
+      if($iq1>=$nm1)$iq1=0;
     }
     echo $p2."$ida.ogg\n";
     echo $p1."intro.ogg\n";
@@ -79,6 +85,6 @@ for($i=0;$i<$nc;$i++){
   }
 }
 mysqli_close($con);
-echo "$ttt $nm($nm2) $nc $nq\n";
+echo "$ttt $nm2 $nm1 $nc $nq\n";
 
 ?>
