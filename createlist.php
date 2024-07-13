@@ -21,8 +21,19 @@ foreach($avoid as $k => $v){
 }
 $listout.=")"; $listin.=")";
 
-$query=mysqli_query($con,"select id,tt from track where score>0 and genre not in $listout order by rand()");
+$query=mysqli_query($con,"select id,tt from track where score=2 and genre not in $listout order by rand()");
 $nm=0;
+for(;;){
+  $row=mysqli_fetch_assoc($query);
+  if($row==null)break;
+  $idm[$nm]=$row["id"];
+  $ttm[$nm]=$row["tt"];
+  $nm++;
+}
+mysqli_free_result($query);
+
+$nm2=$nm;
+$query=mysqli_query($con,"select id,tt from track where score=1 and genre not in $listout order by rand()");
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
@@ -68,6 +79,6 @@ for($i=0;$i<$nc;$i++){
   }
 }
 mysqli_close($con);
-echo "$ttt $nm $nc $nq\n";
+echo "$ttt $nm($nm2) $nc $nq\n";
 
 ?>
