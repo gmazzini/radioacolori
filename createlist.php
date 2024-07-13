@@ -49,8 +49,8 @@ if($nq>$maxm)$nq=$maxm;
 $iq=0;
 $ttt=0;
 for($i=0;$i<$nc;$i++){
-  for($q=0;$q<=$nm;$q++){
-    if($q==$nm){
+  for($q=0;$q<=$nq;$q++){
+    if($q==$nq){
       $ida=$idc[$i];
       $tta=$ttc[$i];
     }
@@ -68,6 +68,6 @@ for($i=0;$i<$nc;$i++){
   }
 }
 mysqli_close($con);
-echo "$ttt\n";
+echo "$ttt $nm $nc $nq\n";
 
 ?>
