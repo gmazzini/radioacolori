@@ -56,26 +56,29 @@ mysqli_free_result($query);
 
 $nq1=(int)($nm1/$nc);
 $nq2=(int)($nm2/$nc);
-$iq1=0;
-$iq2=0;
+$iq1=$iq2=0;
+$um1=$um2=$uc=0;
 $ttt=0;
 for($i=0;$i<$nc;$i++){
   for($q=0;$q<=$runm;$q++){
     if($q==$runm){
       $ida=$idc[$i];
       $tta=$ttc[$i];
+      $uc++;
     }
     else if($q<$nq2){
       $ida=$idm2[$iq2];
       $tta=$ttm2[$iq2];
       $iq2++;
       if($iq2>=$nm2)$iq2=0;
+      $um2++;
     }
     else {
       $ida=$idm1[$iq1];
       $tta=$ttm1[$iq1];
       $iq1++;
       if($iq1>=$nm1)$iq1=0;
+      $um1++;
     }
     echo $p2."$ida.ogg\n";
     echo $p1."intro.ogg\n";
@@ -85,6 +88,6 @@ for($i=0;$i<$nc;$i++){
   }
 }
 mysqli_close($con);
-echo "$ttt $nm2 $nm1 $nc $nq\n";
+echo "$ttt $nm2:$um2 $nm1:$um1 $nc:$uc\n";
 
 ?>
