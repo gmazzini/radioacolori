@@ -46,9 +46,6 @@ mysqli_free_result($query);
 $nq=(int)($nm/$nc);
 if($nq>$maxm)$nq=$maxm;
 
-echo $nq."\n";
-exit(0);
-
 $iq=0;
 $ttt=0;
 for($i=0;$i<$nc;$i++){
@@ -70,7 +67,6 @@ for($i=0;$i<$nc;$i++){
     $ttt+=$tta;
   }
 }
-mysqli_free_result($query);
 mysqli_close($con);
 echo "$ttt\n";
 
