@@ -83,7 +83,7 @@ for($i=0;$i<$nc;$i++){
     }
     fprintf($fp,"%s%s.ogg\n",$p2,$ida);
     fprintf($fp,"%sintro.ogg\n",$p1);
-    for($j=0;$j<5;$j++)fprintf($fp,"%sn%c.ogg\n",$p1,substr($ida,$j,1));
+    for($j=0;$j<5;$j++)fprintf($fp,"%sn%s.ogg\n",$p1,substr($ida,$j,1));
     fprintf($fp,"%scoda.ogg\n",$p1);
     $ttt+=$tta;
   }
