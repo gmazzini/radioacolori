@@ -11,12 +11,12 @@ $co=0;
 foreach($special as $k => $v){
   if($co){$listout.=","; $listin.=",";}
   $listout.="'$v'"; $listin.="'$v'";
-  co=1;
+  $co=1;
 }
 foreach($avoid as $k => $v){
   if($co)$listout.=",";
   $listout.="'$v'";
-  co=1;
+  $co=1;
 }
 $listout.=")"; $listin.=")";
 
