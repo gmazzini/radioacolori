@@ -27,8 +27,8 @@ $nm2=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm2[$nm]=$row["id"];
-  $ttm2[$nm]=$row["tt"];
+  $idm2[$nm2]=$row["id"];
+  $ttm2[$nm2]=$row["tt"];
   $nm2++;
 }
 mysqli_free_result($query);
@@ -89,7 +89,7 @@ for($i=0;$i<$nc;$i++){
   }
 }
 mysqli_close($con);
-fclose(£fp);
+fclose($fp);
 echo "$ttt $nm2:$um2 $nm1:$um1 $nc:$uc\n";
 
 ?>
