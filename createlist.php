@@ -2,7 +2,7 @@
 include "local.php";
 $special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE");
 $avoid=array("INNOVAZIONE");
-$music=45*60;
+$maxm=10;
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p1="/home/ices/music/voice/";
 $p2="/home/ices/music/ogg04/";
@@ -44,6 +44,7 @@ for(;;){
 mysqli_free_result($query);
 
 $nq=(int)($nm/$nc);
+if($nq>$maxm)$nq=$maxm;
 
 echo $nq."\n";
 eit(0);
