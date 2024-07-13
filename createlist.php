@@ -26,8 +26,8 @@ $nm=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm[$ni]=$row["id"];
-  $ttm[$ni]=$row["tt"];
+  $idm[$nm]=$row["id"];
+  $ttm[$nm]=$row["tt"];
   $nm++;
 }
 mysqli_free_result($query);
@@ -37,29 +37,33 @@ $nc=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idi[$nc]=$row["id"];
-  $tti[$nc]=$row["tt"];
+  $idc[$nc]=$row["id"];
+  $ttc[$nc]=$row["tt"];
   $nc++;
 }
 mysqli_free_result($query);
 
-
-
-
-
-
-$query=mysqli_query($con,"select id,tt from track where score=2 and genre in $listin order by rand()");
+$nq=(int)($nm/$nc);
+$iq=0;
 $ttt=0;
-for(;;){
-  $row=mysqli_fetch_assoc($query);
-  if($row==null)break;
-  $id=$row["id"];
-  $tt=$row["tt"];
-  $ttt+=$tt;
-  echo $p1."intro.ogg\n";
-  for($i=0;$i<5;$i++)echo $p1."n".substr($id,$i,1).".ogg\n";
-  echo $p1."coda.ogg\n";
-  echo $p2."$id.ogg\n";
+for($i=0;$i<$nc;$i++){
+  for($q=0;$q<=$nm;$q++){
+    if($q==$nm){
+      $ida=$idc[$i];
+      $tta=$ttc[$i];
+    }
+    else {
+      $ida=$idm[$iq];
+      $tta=$ttm[$iq];
+      $iq++;
+      if($iq>=$nm)$iq=0;
+    }
+    echo $p2."$ida.ogg\n";
+    echo $p1."intro.ogg\n";
+    for($j=0;$j<5;$j++)echo $p1."n".substr($ida,$j,1).".ogg\n";
+    echo $p1."coda.ogg\n";
+    $ttt+=$tta;
+  }
 }
 mysqli_free_result($query);
 mysqli_close($con);
