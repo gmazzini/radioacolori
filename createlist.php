@@ -22,13 +22,24 @@ foreach($avoid as $k => $v){
 $listout.=")"; $listin.=")";
 
 $query=mysqli_query($con,"select id,tt from track where score=2 and genre not in $listout order by rand()");
-$mm=0;
+$nm=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm[$mm]=$row["id"];
-  $ttm[$mm]=$row["tt"];
-  $mm++;
+  $idm[$ni]=$row["id"];
+  $ttm[$ni]=$row["tt"];
+  $nm++;
+}
+mysqli_free_result($query);
+
+$query=mysqli_query($con,"select id,tt from track where score=2 and genre in $listin order by rand()");
+$nc=0;
+for(;;){
+  $row=mysqli_fetch_assoc($query);
+  if($row==null)break;
+  $idi[$nc]=$row["id"];
+  $tti[$nc]=$row["tt"];
+  $nc++;
 }
 mysqli_free_result($query);
 
