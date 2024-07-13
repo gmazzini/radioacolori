@@ -47,7 +47,7 @@ $nq=(int)($nm/$nc);
 if($nq>$maxm)$nq=$maxm;
 
 echo $nq."\n";
-eit(0);
+exit(0);
 
 $iq=0;
 $ttt=0;
