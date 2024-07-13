@@ -6,13 +6,25 @@ $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p1="/home/ices/music/voice/";
 $p2="/home/ices/music/ogg04/";
 
-$listout="(";
-$q=""; foreach($special as $k => $v){$listout.="'$v'".$q; $q=",";}
-foreach($avoid as $k => $v){$listout.="'$v'".$q;
+$listout="("; $listin="(";
+$co=0;
+foreach($special as $k => $v){
+  if($co){$listout.=","; $listin.=",";}
+  $listout.="'$v'"; $listin.="'$v'";
+  co=1;
+}
+foreach($avoid as $k => $v){
+  if($co)$listout.=",";
+  $listout.="'$v'";
+  co=1;
+}
+$listout.=")"; $listin.=")";
 
-  $listin= not in ('817','803','495')
+echo $listout."\n";
+echo $listin."\n";
 
-    
+exit(1);
+
 $query=mysqli_query($con,"select id,tt from track where score=2 order by rand()");
 $ttt=0;
 for(;;){
