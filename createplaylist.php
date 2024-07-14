@@ -85,6 +85,7 @@ for($i=0;$i<$nc;$i++){
       $um1++;
     }
     mysqli_query($con,"insert into playlist (tt,id,position) values ($tt,'$ida',$el)");
+    mysqli_query($con,"update track used=used+1 where id='$ida'");
     $el++;
     fprintf($fp,"%s%s.ogg\n",$p2,$ida);
     fprintf($fp,"%sintro.ogg\n",$p1);
