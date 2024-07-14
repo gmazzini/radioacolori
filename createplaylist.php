@@ -96,6 +96,6 @@ for($i=0;$i<$nc;$i++){
 }
 mysqli_close($con);
 fclose($fp);
-echo "$ttt $nm2:$um2 $nm1:$um1 $nc:$uc\n";
+echo "$duration $nm2:$um2 $nm1:$um1 $nc:$uc\n";
 
 ?>
