@@ -1,9 +1,9 @@
 <?php
 include "local.php";
+$runm=(int)argv[1];
 $tt=(int)(time()/86400)+1;
 $special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE");
 $avoid=array("INNOVAZIONE");
-$runm=7;
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p1="/home/ices/music/voice/";
 $p2="/home/ices/music/ogg04/";
@@ -23,7 +23,7 @@ foreach($avoid as $k => $v){
 }
 $listout.=")"; $listin.=")";
 
-$query=mysqli_query($con,"select id,duration from track where score=2 and genre not in $listout order by rand()");
+$query=mysqli_query($con,"select id,duration from track where score=2 and genre not in $listout order by used desc");
 $nm2=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
@@ -35,7 +35,7 @@ for(;;){
 mysqli_free_result($query);
 
 $nm1=0;
-$query=mysqli_query($con,"select id,duration from track where score=1 and genre not in $listout order by duration");
+$query=mysqli_query($con,"select id,duration from track where score=1 and genre not in $listout order by used desc");
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
@@ -45,7 +45,7 @@ for(;;){
 }
 mysqli_free_result($query);
 
-$query=mysqli_query($con,"select id,duration from track where score=2 and genre in $listin order by rand()");
+$query=mysqli_query($con,"select id,duration from track where score=2 and genre in $listin order by used desc");
 $nc=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
