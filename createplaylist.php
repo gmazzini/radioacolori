@@ -72,7 +72,7 @@ for($i=0;$i<$nc;$i++){
     }
     else if($q<$nq2){
       $ida=$idm2[$iq2];
-      $durationa=$$durationa2[$iq2];
+      $durationa=$durationa2[$iq2];
       $iq2++;
       if($iq2>=$nm2)$iq2=0;
       $um2++;
