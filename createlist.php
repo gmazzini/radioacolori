@@ -1,5 +1,6 @@
 <?php
 include "local.php";
+$playlist=(int)$argv[1];
 $special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE");
 $avoid=array("INNOVAZIONE");
 $runm=7;
@@ -55,11 +56,13 @@ for(;;){
 }
 mysqli_free_result($query);
 
+mysqli_query($con,"delete from playlst where playlist=$playlist");
 $nq1=(int)($nm1/$nc);
 $nq2=(int)($nm2/$nc);
 $iq1=$iq2=0;
 $um1=$um2=$uc=0;
 $ttt=0;
+$el=0;
 for($i=0;$i<$nc;$i++){
   for($q=0;$q<=$runm;$q++){
     if($q==$runm){
@@ -81,6 +84,8 @@ for($i=0;$i<$nc;$i++){
       if($iq1>=$nm1)$iq1=0;
       $um1++;
     }
+    mysqli_query($con,"insert into playlist (playlist,id,position) values ($playlist,'$ida',$el)");
+    $el++;
     fprintf($fp,"%s%s.ogg\n",$p2,$ida);
     fprintf($fp,"%sintro.ogg\n",$p1);
     for($j=0;$j<5;$j++)fprintf($fp,"%sn%s.ogg\n",$p1,substr($ida,$j,1));
