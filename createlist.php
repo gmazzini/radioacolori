@@ -34,7 +34,7 @@ for(;;){
 mysqli_free_result($query);
 
 $nm1=0;
-$query=mysqli_query($con,"select id,tt from track where score=1 and genre not in $listout order by rand()");
+$query=mysqli_query($con,"select id,tt from track where score=1 and genre not in $listout order by tt");
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
