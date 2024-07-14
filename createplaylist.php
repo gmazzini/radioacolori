@@ -56,7 +56,7 @@ for(;;){
 }
 mysqli_free_result($query);
 
-mysqli_query($con,"delete from playlist where playlist=$playlist");
+mysqli_query($con,"delete from playlist where tt=$tt");
 $nq1=(int)($nm1/$nc);
 $nq2=(int)($nm2/$nc);
 $iq1=$iq2=0;
