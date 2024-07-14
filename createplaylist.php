@@ -1,6 +1,6 @@
 <?php
 include "local.php";
-$runm=(int)argv[1];
+$runm=(int)$argv[1];
 $tt=(int)(time()/86400)+1;
 $special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE");
 $avoid=array("INNOVAZIONE");
