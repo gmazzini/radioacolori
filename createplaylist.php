@@ -7,7 +7,7 @@ $avoid=array("INNOVAZIONE");
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p1="/home/ices/music/voice/";
 $p2="/home/ices/music/ogg04/";
-$fp=fopen("/home/ices/playlist_$tt.txt","wt");
+$fp=fopen("/home/ices/playlist.txt","wt");
 
 $listout="("; $listin="(";
 $co=0;
