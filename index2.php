@@ -4,6 +4,14 @@ date_default_timezone_set("Europe/Rome");
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $tt=(int)(time()/86400);
 
+echo "<script>\n";
+echo "var y=100;\n";
+echo "var x = setInterval(function(){\n";
+  echo "document.getElementById("demo").innerHTML=y;";
+  echo "y--;\n";
+echo "},1000);\n";
+echo "</script>\n";
+
 echo "<img src='logo.jpg' width='10%' height='auto'>";
 echo "<pre>";
 $ll=file("/var/log/ices/ices.log");
@@ -57,7 +65,7 @@ for($i=$f;$i<=$t;$i++){
   $vv+=(int)$row["duration"];
   mysqli_free_result($query);
 }
-echo "Prossimo brano tra: ".$xx+$dura-time()."s\n\n";
+echo "Prossimo brano tra: ".$xx+$dura-time()."s<p id='cdw'></p>\n\n";
 
 echo "Powered by I Colori del Navile\nEmail info at radioacolori.net\nCF 91357680379 - ROC 33355\n";
 mysqli_close($con);
