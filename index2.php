@@ -17,10 +17,11 @@ echo "I Colori del Navile presentano Radio a Colori\nMusica libera con licenza C
 echo "<font color='blue'>State Ascoltando\n</font>";
 $query=mysqli_query($con,"select title,author,genre,duration from track where id='$id'");
 $row=mysqli_fetch_assoc($query);
+$dura=(int)$row["duration"];
 echo "Titolo: ".$row["title"]."\n";
 echo "Autore: ".$row["author"]."\n";
 echo "Genere: ".$row["genre"]."\n";
-echo "Durata: ".(int)$row["duration"]."s\n";
+echo "Durata: ".$dura."s\n";
 echo "Inizio: ".date("Y-m-d H:i:s",$xx)."\n";
 echo "Identificativo: ".$id."\n\n";
 mysqli_free_result($query);
@@ -56,7 +57,7 @@ for($i=$f;$i<=$t;$i++){
   $vv+=(int)$row["duration"];
   mysqli_free_result($query);
 }
-echo "Prossimo brano tra: ".$xx+(int)$row["duration"]-time()."s\n\n";
+echo "Prossimo brano tra: ".$xx+$dura-time()."s\n\n";
 
 echo "Powered by I Colori del Navile\nEmail info at radioacolori.net\nCF 91357680379 - ROC 33355\n";
 mysqli_close($con);
