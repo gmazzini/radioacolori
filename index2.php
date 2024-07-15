@@ -13,8 +13,8 @@ for($i=count($ll)-1;$i>0;$i--)
 $id=current(explode(".",end(explode("/",$ll[$i]))));
 $xx=strtotime(substr($ll[$i],1,20));
 
-echo "$id $xx\n";
-echo time()-$xx."\n";
+echo "Prossimo brano tra: ".time()-$xx."s\n";
+echo "I Colori del Navile presentano Radio a Colori\nMusica libera con licenza CC-BY\n";
 
 echo "<font color='blue'>State Ascoltando\n</font>";
 $query=mysqli_query($con,"select title,author,genre,duration from track where id='$id'");
@@ -22,7 +22,7 @@ $row=mysqli_fetch_assoc($query);
 echo "Titolo: ".$row["title"]."\n";
 echo "Autore: ".$row["author"]."\n";
 echo "Genere: ".$row["genre"]."\n";
-echo "Durata: ".$row["duration"]."\n";
+echo "Durata: ".(int)$row["duration"]."\n";
 echo "Inizio: ".date("Y-m-d H:i:s",$xx)."\n";
 echo "Identificativo: ".$id."\n";
 mysqli_free_result($query);
