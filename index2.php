@@ -16,7 +16,7 @@ $xx=strtotime(substr($ll[$i],1,20));
 echo "$id $xx\n";
 echo time()-$xx."\n";
 
-echo "State Ascoltando";
+echo "<font color='blue'>State Ascoltando\n</font>";
 $query=mysqli_query($con,"select title,author,genre,duration from track where id='$id'");
 $row=mysqli_fetch_assoc($query);
 echo "Titolo: ".$row["title"]."\n";
