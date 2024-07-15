@@ -23,7 +23,7 @@ foreach($avoid as $k => $v){
 $listout.=")"; $listin.=")";
 
 
-function myshuffle($a,$f,$t){
+function myshuffle(&$a,$f,$t){
   for($j=$t;$j>$f;$j--){
     $r=rand($f,$t);
     $aux=$a[$j];
