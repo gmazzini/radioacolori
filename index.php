@@ -24,14 +24,17 @@ echo "  if(y<=0){location.reload();}\n";
 echo "},1000);\n";
 echo "</script>\n";
 
-echo "<img src='logo.jpg' width='10%' height='auto'>";
-echo "<pre>";
+echo "<pre><table>";
+echo "<td><img src='logo.jpg' width='10%' height='auto'></td>";
+echo "<td><form method='post'><input id='myid'>
+echo "</table>";
+
 echo "I Colori del Navile presentano Radio a Colori\nMusica libera con licenza CC-BY\n\n";
 echo "<font color='blue'>State Ascoltando\n</font>";
-echo "Titolo: ".$row["title"]."\n";
+echo "<font color='red'>Titolo: ".$row["title"]."\n";
 echo "Autore: ".$row["author"]."\n";
 echo "Genere: ".$row["genre"]."\n";
-echo "Durata: ".$dura."s\n";
+echo "Durata: ".$dura."s\n</font>";
 echo "Inizio: ".date("Y-m-d H:i:s",$xx)."\n";
 echo "Identificativo: ".$id."\n\n";
 
@@ -67,6 +70,6 @@ for($i=$f;$i<=$t;$i++){
   mysqli_free_result($query);
 }
 echo "Prossimo brano tra: <div style='display: inline' id='cdw'></div>s\n\n";
-echo "Powered by I Colori del Navile\nEmail info at radioacolori.net\nCF 91357680379 - ROC 33355\n";
+echo "Powered by I Colori del Navile APS\nEmail info at radioacolori.net\nCF 91357680379 - ROC 33355\n";
 mysqli_close($con);
 ?>
