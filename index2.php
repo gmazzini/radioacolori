@@ -3,6 +3,16 @@ include "local.php";
 date_default_timezone_set("Europe/Rome");
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $tt=(int)(time()/86400);
+$ll=file("/var/log/ices/ices.log");
+for($i=count($ll)-1;$i>0;$i--)
+  if(strpos($ll[$i],"Currently playing")!==false)
+    break;
+$id=current(explode(".",end(explode("/",$ll[$i]))));
+$xx=strtotime(substr($ll[$i],1,20));
+$query=mysqli_query($con,"select title,author,genre,duration from track where id='$id'");
+$row=mysqli_fetch_assoc($query);
+$dura=(int)$row["duration"];
+mysqli_free_result($query);
 
 echo "<script>\n";
 echo "var y=100;\n";
@@ -14,25 +24,14 @@ echo "</script>\n";
 
 echo "<img src='logo.jpg' width='10%' height='auto'>";
 echo "<pre>";
-$ll=file("/var/log/ices/ices.log");
-for($i=count($ll)-1;$i>0;$i--)
-  if(strpos($ll[$i],"Currently playing")!==false)
-    break;
-$id=current(explode(".",end(explode("/",$ll[$i]))));
-$xx=strtotime(substr($ll[$i],1,20));
 echo "I Colori del Navile presentano Radio a Colori\nMusica libera con licenza CC-BY\n\n";
-
 echo "<font color='blue'>State Ascoltando\n</font>";
-$query=mysqli_query($con,"select title,author,genre,duration from track where id='$id'");
-$row=mysqli_fetch_assoc($query);
-$dura=(int)$row["duration"];
 echo "Titolo: ".$row["title"]."\n";
 echo "Autore: ".$row["author"]."\n";
 echo "Genere: ".$row["genre"]."\n";
 echo "Durata: ".$dura."s\n";
 echo "Inizio: ".date("Y-m-d H:i:s",$xx)."\n";
 echo "Identificativo: ".$id."\n\n";
-mysqli_free_result($query);
 
 echo "<font color='blue'>Palinsesto\n</font>";
 $query=mysqli_query($con,"select id from playlist where tt=$tt order by position");
