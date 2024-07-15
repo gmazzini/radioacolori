@@ -9,8 +9,7 @@ $id=current(explode(".",end(explode("/",$ll[$i]))));
 $tt=strtotime(substr($ll[$i],1,20));
 
 echo "$id $tt\n";
-echo $ll[$i]."\n";
-
+echo time()-$tt."\n";
   
   
 ?>
