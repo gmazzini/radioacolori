@@ -18,8 +18,9 @@ $next=$xx+$dura-time();
 echo "<script>\n";
 echo "var y=$next;\n";
 echo "var x = setInterval(function(){\n";
-echo "  document.getElementById('cdw').innerHTML=y;";
+echo "  document.getElementById('cdw').innerHTML=y;\n";
 echo "  y--;\n";
+echo "  if(y==2200){location.reload();}\n";
 echo "},1000);\n";
 echo "</script>\n";
 
