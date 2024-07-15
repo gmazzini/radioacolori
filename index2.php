@@ -20,7 +20,7 @@ echo "var y=$next;\n";
 echo "var x = setInterval(function(){\n";
 echo "  document.getElementById('cdw').innerHTML=y;\n";
 echo "  y--;\n";
-echo "  if(y==2200){location.reload();}\n";
+echo "  if(y==2100){location.reload();}\n";
 echo "},1000);\n";
 echo "</script>\n";
 
