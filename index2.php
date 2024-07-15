@@ -34,8 +34,8 @@ for($ts=0;;$ts++){
   if($seq[$ts]==$id)$pp=$ts;
 }
 mysqli_free_result($query);
-$f=$pp-2; if($f<0)$f=0;
-$t=$pp+2; if($t>=$ts)$t=$ts-1;
+$f=$pp-4; if($f<0)$f=0;
+$t=$pp+4; if($t>=$ts)$t=$ts-1;
 $vv=$xx;
 for($i=$f;$i<$pp;$i++){
   $query=mysqli_query($con,"select duration from track where id='$seq[$i]'");
