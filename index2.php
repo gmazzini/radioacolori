@@ -46,11 +46,13 @@ for($i=$f;$i<$pp;$i++){
 for($i=$f;$i<=$t;$i++){
   $query=mysqli_query($con,"select title,author,genre,duration from track where id='$seq[$i]'");
   $row=mysqli_fetch_assoc($query);
+  if($i==$pp)echo "<font color='red'>";
   echo date("H:i",$vv)." | ".$seq[$i];
   echo " | ".$row["title"];
   echo " | ".$row["author"];
   echo " | ".$row["genre"];
   echo " | ".(int)$row["duration"]."s\n";
+  if($i==$pp)echo "</font>";
   $vv+=(int)$row["duration"];
   mysqli_free_result($query);
 }
