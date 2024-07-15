@@ -12,8 +12,8 @@ for($i=count($ll)-1;$i>0;$i--)
     break;
 $id=current(explode(".",end(explode("/",$ll[$i]))));
 $xx=strtotime(substr($ll[$i],1,20));
-
 echo "I Colori del Navile presentano Radio a Colori\nMusica libera con licenza CC-BY\n\n";
+
 echo "<font color='blue'>State Ascoltando\n</font>";
 $query=mysqli_query($con,"select title,author,genre,duration from track where id='$id'");
 $row=mysqli_fetch_assoc($query);
@@ -24,6 +24,22 @@ echo "Durata: ".(int)$row["duration"]."s\n";
 echo "Inizio: ".date("Y-m-d H:i:s",$xx)."\n";
 echo "Identificativo: ".$id."\n\n";
 mysqli_free_result($query);
+
+echo "<font color='blue'>Palinsesto\n</font>";
+$query=mysqli_query($con,"select id from playlist where tt=$tt order by position");
+for($i=0;;$i++){
+  $row=mysqli_fetch_assoc($query);
+mysqli_free_result($query);
+
+  
+echo "Titolo: ".$row["title"]."\n";
+echo "Autore: ".$row["author"]."\n";
+echo "Genere: ".$row["genre"]."\n";
+echo "Durata: ".(int)$row["duration"]."s\n";
+echo "Inizio: ".date("Y-m-d H:i:s",$xx)."\n";
+echo "Identificativo: ".$id."\n\n";
+mysqli_free_result($query);
+
 
 echo "Prossimo brano tra: ".$xx+(int)$row["duration"]-time()."s\n";
 
