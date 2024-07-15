@@ -22,16 +22,27 @@ foreach($avoid as $k => $v){
 }
 $listout.=")"; $listin.=")";
 
-$query=mysqli_query($con,"select id,duration from track where score=2 and genre not in $listout order by rand()");
+echo "select id,used from track where score=2 and genre not in $listout order by used\n";
+$query=mysqli_query($con,"select id,used from track where score=2 and genre not in $listout order by used");
 $nm2=0;
+$fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idm2[$nm2]=$row["id"];
-  $durationm2[$nm2]=$row["duration"];
+  $auxused=$row["used"];
+  if($nm2==0)$lastused=$auxused;
+  elseif($lastused<>$auxused){
+    myshuffle($idm2,$fromsh,$nm2-1);
+    $fromsh=$nm2;
+    $lastused=$auxused;
+  }
   $nm2++;
 }
 mysqli_free_result($query);
+print_r($idm2);
+
+exit(1);
 
 $nm1=0;
 $query=mysqli_query($con,"select id,duration from track where score=1 and genre not in $listout order by rand()");
