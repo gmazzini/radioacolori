@@ -15,11 +15,28 @@ $xx=strtotime(substr($ll[$i],1,20));
 echo "$id $xx\n";
 echo time()-$xx."\n";
 
-$query=mysqli_query($con,"select title,author,duration from track where id='$id'");
+echo "State Ascoltando";
+$query=mysqli_query($con,"select title,author,genre,duration from track where id='$id'");
 $row=mysqli_fetch_assoc($query);
-echo $row["title"]." ".$row["author"]." ".$row["duration"]."\n";
+echo "Titolo: ".$row["title"]."\n";
+echo "Autore: ".$row["author"]."\n";
+echo "Genere: ".$row["genre"]."\n";
+echo "Durata: ".$row["duration"]."\n";
+echo "Identificativo: ".$id."\n";
+
+Autore: IK4LZH LEPIDA
+Titolo: LA PASSIONE
+Genere: RADIOAMATORI
+Identificativo: 34746
+Durata: 0
+Inizio: 2024-07-15 19:08:26
+
+
+printf("
+echo $row["title"]."|".$row["author"]." ".$row["duration"]."\n";
 mysqli_free_result($query);
 
+mysqli_close($con);
 
   
 ?>
