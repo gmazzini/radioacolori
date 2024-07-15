@@ -29,7 +29,7 @@ echo "<td><img src='logo.jpg' width='10%' height='auto'></td>";
 echo "<td><form method='post'><input id='myid'>
 echo "</table>";
 
-echo "I Colori del Navile presentano Radio a Colori\nMusica libera con licenza CC-BY\n\n";
+echo "I Colori del Navile APS presentano Radio a Colori\nMusica libera con licenza CC-BY\n\n";
 echo "<font color='blue'>State Ascoltando\n</font>";
 echo "<font color='red'>Titolo: ".$row["title"]."\n";
 echo "Autore: ".$row["author"]."\n";
