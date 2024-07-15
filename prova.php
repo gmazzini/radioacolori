@@ -40,7 +40,7 @@ $fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm2[$nm2]=$row["id"];
+  $idm2[$nm2]=$row["id"]."_".$row["used"];
   $auxused=$row["used"];
   if($nm2==0)$lastused=$auxused;
   elseif($lastused<>$auxused){
