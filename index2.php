@@ -15,7 +15,7 @@ $xx=strtotime(substr($ll[$i],1,20));
 echo "$id $xx\n";
 echo time()-$xx."\n";
 
-$query=mysqli_query($con,"select title,author,duration from track id='$id'");
+$query=mysqli_query($con,"select title,author,duration from track where id='$id'");
 $row=mysqli_fetch_assoc($query);
 echo $row["title"]." ".$row["author"]." ".$row["duration"]."\n";
 mysqli_free_result($query);
