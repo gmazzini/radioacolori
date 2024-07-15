@@ -26,7 +26,7 @@ echo "</script>\n";
 
 echo "<pre><table>";
 echo "<td><img src='logo.jpg' width='10%' height='auto'></td>";
-echo "<td><form method='post'><input id='myid'>
+echo "<td><form method='post'><input id='myid'></td>";
 echo "</table>";
 
 echo "I Colori del Navile APS presentano Radio a Colori\nMusica libera con licenza CC-BY\n\n";
