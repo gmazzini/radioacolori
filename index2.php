@@ -7,8 +7,8 @@ $tt=(int)(time()/86400);
 echo "<script>\n";
 echo "var y=100;\n";
 echo "var x = setInterval(function(){\n";
-  echo "document.getElementById("demo").innerHTML=y;";
-  echo "y--;\n";
+echo "  document.getElementById('cdw').innerHTML=y;";
+echo "  y--;\n";
 echo "},1000);\n";
 echo "</script>\n";
 
