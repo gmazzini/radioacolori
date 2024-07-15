@@ -26,10 +26,8 @@ echo "</script>\n";
 
 echo "<pre><table>";
 echo "<td><img src='logo.jpg' width='10%' height='auto'></td>";
-echo "<td><form method='post'><input type='text' name='myid'><input type='submit' value='Cerca'></form>";
+echo "<td><pre><form method='post'><input type='text' name='myid'><input type='submit' value='Cerca'></form>";
 $ids=$_POST["myid"];
-print_r($_POST);
-echo $ids."...\n";
 $query1=mysqli_query($con,"select title,author,genre,duration from track where id='$ids'");
 $row1=mysqli_fetch_assoc($query1);
 mysqli_free_result($query1);
@@ -40,7 +38,7 @@ if($row1["title"]!=null){
   echo "Durata: ".(int)$row1["duration"]."s\n</font>";
   echo "Identificativo: ".$ids."\n";
 }
-echo "</td></table>";
+echo "</pre></td></table>";
 
 echo "I Colori del Navile APS presentano Radio a Colori\nMusica libera con licenza CC-BY\n\n";
 echo "<font color='blue'>State Ascoltando\n</font>";
