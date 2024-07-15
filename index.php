@@ -26,7 +26,7 @@ echo "</script>\n";
 
 echo "<pre><table>";
 echo "<td><img src='logo.jpg' width='10%' height='auto'></td>";
-echo "<td><form method='post'><input type='text' id='myid'><input type='submit' value='Cerca'></td>";
+echo "<td><form method='post'><input type='text' id='myid'><input type='submit' value='Cerca'></form></td>";
 $ids=$_POST["myid"];
 echo $ids."...\n";
 $query1=mysqli_query($con,"select title,author,genre,duration from track where id='$ids'");
