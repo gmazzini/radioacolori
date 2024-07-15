@@ -26,7 +26,7 @@ echo "</script>\n";
 
 echo "<pre><table>";
 echo "<td><img src='logo.jpg' width='10%' height='auto'></td>";
-echo "<td><form method='post'><input type='text' id='myid'><input type='submit' value='Cerca'></form>";
+echo "<td><form method='post'><input type='text' name='myid'><input type='submit' value='Cerca'></form>";
 $ids=$_POST["myid"];
 print_r($_POST);
 echo $ids."...\n";
