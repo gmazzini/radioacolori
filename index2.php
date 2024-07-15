@@ -65,7 +65,7 @@ for($i=$f;$i<=$t;$i++){
   $vv+=(int)$row["duration"];
   mysqli_free_result($query);
 }
-echo "Prossimo brano tra: <p id='cdw'></p>s\n\n";
+echo "Prossimo brano tra: <div id='cdw'></div>s\n\n";
 
 echo "Powered by I Colori del Navile\nEmail info at radioacolori.net\nCF 91357680379 - ROC 33355\n";
 mysqli_close($con);
