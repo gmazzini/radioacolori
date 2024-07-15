@@ -22,18 +22,8 @@ echo "Titolo: ".$row["title"]."\n";
 echo "Autore: ".$row["author"]."\n";
 echo "Genere: ".$row["genre"]."\n";
 echo "Durata: ".$row["duration"]."\n";
+echo "Inizio: ".date("Y-m-d H:i:s",$xx)."\n";
 echo "Identificativo: ".$id."\n";
-
-Autore: IK4LZH LEPIDA
-Titolo: LA PASSIONE
-Genere: RADIOAMATORI
-Identificativo: 34746
-Durata: 0
-Inizio: 2024-07-15 19:08:26
-
-
-printf("
-echo $row["title"]."|".$row["author"]." ".$row["duration"]."\n";
 mysqli_free_result($query);
 
 mysqli_close($con);
