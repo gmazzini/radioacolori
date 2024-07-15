@@ -4,7 +4,7 @@ date_default_timezone_set("Europe/Rome");
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $tt=(int)(time()/86400);
 
-echo "<img src='logo.jpg' width='20%' height='auto'>";
+echo "<img src='logo.jpg' width='10%' height='auto'>";
 echo "<pre>";
 $ll=file("/var/log/ices/ices.log");
 for($i=count($ll)-1;$i>0;$i--)
