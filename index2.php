@@ -13,14 +13,14 @@ $query=mysqli_query($con,"select title,author,genre,duration from track where id
 $row=mysqli_fetch_assoc($query);
 $dura=(int)$row["duration"];
 mysqli_free_result($query);
-$next=$xx+$dura-time();
+$next=$xx+$dura-time()+25;
 
 echo "<script>\n";
 echo "var y=$next;\n";
 echo "var x = setInterval(function(){\n";
 echo "  document.getElementById('cdw').innerHTML=y;\n";
 echo "  y--;\n";
-echo "  if(y==2100){location.reload();}\n";
+echo "  if(y<=0){location.reload();}\n";
 echo "},1000);\n";
 echo "</script>\n";
 
