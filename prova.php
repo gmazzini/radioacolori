@@ -22,7 +22,6 @@ foreach($avoid as $k => $v){
 }
 $listout.=")"; $listin.=")";
 
-
 function myshuffle(&$a,$f,$t){
   for($j=$t;$j>$f;$j--){
     $r=rand($f,$t);
@@ -32,15 +31,13 @@ function myshuffle(&$a,$f,$t){
   }
 }
 
-
-echo "select id,used from track where score=2 and genre not in $listout order by used\n";
 $query=mysqli_query($con,"select id,used from track where score=2 and genre not in $listout order by used");
 $nm2=0;
 $fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm2[$nm2]=$row["id"]."_".$row["used"];
+  $idm2[$nm2]=$row["id"];
   $auxused=$row["used"];
   if($nm2==0)$lastused=$auxused;
   elseif($lastused<>$auxused){
@@ -51,33 +48,46 @@ for(;;){
   $nm2++;
 }
 mysqli_free_result($query);
-print_r($idm2);
 
-exit(1);
-
+$query=mysqli_query($con,"select id,used from track where score=1 and genre not in $listout order by used");
 $nm1=0;
-$query=mysqli_query($con,"select id,duration from track where score=1 and genre not in $listout order by rand()");
+$fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idm1[$nm1]=$row["id"];
-  $durationm1[$nm1]=$row["duration"];
+  $auxused=$row["used"];
+  if($nm1==0)$lastused=$auxused;
+  elseif($lastused<>$auxused){
+    myshuffle($idm1,$fromsh,$nm1-1);
+    $fromsh=$nm1;
+    $lastused=$auxused;
+  }
   $nm1++;
 }
 mysqli_free_result($query);
 
-$query=mysqli_query($con,"select id,duration from track where score=2 and genre in $listin order by rand()");
+$query=mysqli_query($con,"select id,used from track where score=2 and genre in $listin order by used");
 $nc=0;
+$fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idc[$nc]=$row["id"];
-  $durationc[$nc]=$row["duration"];
+  $auxused=$row["used"];
+  if($nc==0)$lastused=$auxused;
+  elseif($lastused<>$auxused){
+    myshuffle($idc,$fromsh,$nc-1);
+    $fromsh=$nc;
+    $lastused=$auxused;
+  }
   $nc++;
 }
 mysqli_free_result($query);
 
-mysqli_query($con,"delete from playlist where tt=$tt");
+
+exit(1);
+
 $nq1=(int)($nm1/$nc);
 $nq2=(int)($nm2/$nc);
 $iq1=$iq2=0;
