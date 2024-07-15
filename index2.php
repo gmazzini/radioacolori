@@ -37,7 +37,14 @@ mysqli_free_result($query);
 $f=$pp-2; if($f<0)$f=0;
 $t=$pp+2; if($t>=$ts)$t=$ts-1;
 for($i=$f;$i<=$t;$i++){
-  echo $seq[$i]."\n";
+  $query=mysqli_query($con,"select title,author,genre,duration from track where id='$seq[$i]'");
+  $row=mysqli_fetch_assoc($query);
+  echo $seq[$i];
+  echo " | ".$row["title"];
+  echo " | ".$row["author"];
+  echo " | ".$row["genre"];
+  echo " | ".(int)$row["duration"]."s\n";
+  mysqli_free_result($query);
 }
 
 echo "Prossimo brano tra: ".$xx+(int)$row["duration"]-time()."s\n";
