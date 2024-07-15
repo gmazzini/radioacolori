@@ -28,6 +28,7 @@ echo "<pre><table>";
 echo "<td><img src='logo.jpg' width='10%' height='auto'></td>";
 echo "<td><form method='post'><input type='text' id='myid'><input type='submit' value='Cerca'></form>";
 $ids=$_POST["myid"];
+print_r($_POST);
 echo $ids."...\n";
 $query1=mysqli_query($con,"select title,author,genre,duration from track where id='$ids'");
 $row1=mysqli_fetch_assoc($query1);
