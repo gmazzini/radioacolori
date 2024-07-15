@@ -13,9 +13,10 @@ $query=mysqli_query($con,"select title,author,genre,duration from track where id
 $row=mysqli_fetch_assoc($query);
 $dura=(int)$row["duration"];
 mysqli_free_result($query);
+$next=$xx+$dura-time();
 
 echo "<script>\n";
-echo "var y=100;\n";
+echo "var y=$next;\n";
 echo "var x = setInterval(function(){\n";
 echo "  document.getElementById('cdw').innerHTML=y;";
 echo "  y--;\n";
@@ -64,7 +65,7 @@ for($i=$f;$i<=$t;$i++){
   $vv+=(int)$row["duration"];
   mysqli_free_result($query);
 }
-echo "Prossimo brano tra: ".$xx+$dura-time()."s<p id='cdw'></p>\n\n";
+echo "Prossimo brano tra: <p id='cdw'></p>s\n\n";
 
 echo "Powered by I Colori del Navile\nEmail info at radioacolori.net\nCF 91357680379 - ROC 33355\n";
 mysqli_close($con);
