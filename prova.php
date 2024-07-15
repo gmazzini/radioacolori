@@ -22,6 +22,17 @@ foreach($avoid as $k => $v){
 }
 $listout.=")"; $listin.=")";
 
+
+function myshuffle($a,$f,$t){
+  for($j=$t;$j>$f;$j--){
+    $r=rand($f,$t);
+    $aux=$a[$j];
+    $a[$j]=$a[$r];
+    $a[$r]=$aux;
+  }
+}
+
+
 echo "select id,used from track where score=2 and genre not in $listout order by used\n";
 $query=mysqli_query($con,"select id,used from track where score=2 and genre not in $listout order by used");
 $nm2=0;
