@@ -81,6 +81,7 @@ for($i=$f;$i<=$t;$i++){
   mysqli_free_result($query);
 }
 echo "Prossimo brano tra: <div style='display: inline' id='cdw'></div>s\n\n";
-echo "Powered by I Colori del Navile APS\nEmail info at radioacolori.net\nCF 91357680379 - ROC 33355\n";
+echo "<p style='text-align: center'>Powered by I Colori del Navile APS\n";
+echo "Email info at radioacolori.net\nCF 91357680379 - ROC 33355\n</p>";
 mysqli_close($con);
 ?>
