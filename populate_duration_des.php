@@ -8,8 +8,8 @@ for(;;){
   $id=$row["id"];
   $oo=json_decode(shell_exec("ffprobe -i music/ogg04v/$id.ogg -v quiet -print_format json -show_streams -hide_banner"),true);
   $duration_des=$oo["streams"][0]["duration"];
-  print_r($oo); 
-  echo $duration_des; exit(1);
+  mysqli_query($con,"update track set duration_des=$duration_des where id='$id'");
+  echo "$id $duration_des\n";
 }
 mysqli_free_result($query);
 mysqli_close($con);
