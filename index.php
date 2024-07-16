@@ -72,7 +72,7 @@ for($i=$f;$i<=$t;$i++){
   $row=mysqli_fetch_assoc($query);
   if($i==$pp)echo "<font color='red'>";
   echo date("H:i",$vv)." | ".$seq[$i];
-  echo " | ".$row["title"];
+  echo " | ".mystr($row["title"],20);
   echo " | ".$row["author"];
   echo " | ".$row["genre"];
   echo " | ".(int)$row["duration"]."s\n";
@@ -84,4 +84,13 @@ echo "Prossimo brano tra: <div style='display: inline' id='cdw'></div>s\n\n";
 echo "<p style='text-align: center'>Powered by I Colori del Navile APS\n";
 echo "Email info at radioacolori.net\nCF 91357680379 - ROC 33355\n</p>";
 mysqli_close($con);
+
+function mystr($a,$l){
+  $la=strlen($a);
+  if($la>=$l)return substr($a,0,$l-3)."...";
+  if($la=$l-1)return substr($a,0,$l-2)."..";
+  if($la=$l-2)return substr($a,0,$l-2).".";
+  return $a.str_repeat(" ",$l-$la);
+}
+
 ?>
