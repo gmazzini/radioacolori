@@ -72,9 +72,9 @@ for($i=$f;$i<=$t;$i++){
   $row=mysqli_fetch_assoc($query);
   if($i==$pp)echo "<font color='red'>";
   echo date("H:i",$vv)." | ".$seq[$i];
-  echo " | ".mystr($row["title"],30);
-  echo " | ".mystr($row["author"],20);
-  echo " | ".mystr($row["genre"],10);
+  echo " | ".mystr($row["title"],40);
+  echo " | ".mystr($row["author"],30);
+  echo " | ".mystr($row["genre"],20);
   echo " | ".(int)$row["duration"]."s\n";
   if($i==$pp)echo "</font>";
   $vv+=(int)$row["duration"];
