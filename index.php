@@ -13,7 +13,7 @@ $query=mysqli_query($con,"select title,author,genre,duration from track where id
 $row=mysqli_fetch_assoc($query);
 $dura=(int)$row["duration"];
 mysqli_free_result($query);
-$next=$xx+$dura-time()+25;
+$next=$xx+$dura-time()+17;
 
 echo "<script>\n";
 echo "var y=$next;\n";
