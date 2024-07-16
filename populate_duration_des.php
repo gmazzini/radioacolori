@@ -7,10 +7,9 @@ for(;;){
   if($row==null)break;
   $id=$row["id"];
   $oo=json_decode(shell_exec("ffprobe -i ogg04v/$id.ogg -v quiet -print_format json -show_streams -hide_banner"),true);
-  print_r($oo); ecit(1);
+  print_r($oo); exit(1);
 }
 mysqli_free_result($query);
-
-
+mysqli_close($con);
 
 ?>
