@@ -40,7 +40,7 @@ if($row1["title"]!=null){
 }
 echo "</pre></td></table>";
 
-echo "I Colori del Navile APS presentano Radio a Colori\nMusica libera con licenza CC-BY\n\n";
+echo "<p style='text-align: center'>I Colori del Navile APS presentano Radio a Colori\nMusica libera con licenza CC-BY\n</p>";
 echo "<font color='blue'>State Ascoltando\n</font>";
 echo "<font color='red'>Titolo: ".$row["title"]."\n";
 echo "Autore: ".$row["author"]."\n";
