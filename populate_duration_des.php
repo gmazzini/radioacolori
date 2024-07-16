@@ -6,7 +6,7 @@ for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $id=$row["id"];
-  $oo=json_decode(shell_exec("ffprobe -i ogg04v/$id.ogg -v quiet -print_format json -show_streams -hide_banner"),true);
+  $oo=json_decode(shell_exec("ffprobe -i music/ogg04v/$id.ogg -v quiet -print_format json -show_streams -hide_banner"),true);
   print_r($oo); exit(1);
 }
 mysqli_free_result($query);
