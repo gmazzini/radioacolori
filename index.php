@@ -6,7 +6,7 @@ $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $tt=(int)(time()/86400);
 $ll=file("/var/log/ices/ices.log");
 for($i=count($ll)-1;$i>0;$i--)
-  if(strpos($ll[$i],"Currently playing")!==false)
+  if(strpos($ll[$i],"Currently playing \"/home/ices/music/ogg04/")!==false)
     break;
 $id=current(explode(".",end(explode("/",$ll[$i]))));
 $xx=strtotime(substr($ll[$i],1,20));
