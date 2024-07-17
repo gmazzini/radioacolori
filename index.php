@@ -1,5 +1,6 @@
 <?php
 include "local.php";
+$dtq=17;
 date_default_timezone_set("Europe/Rome");
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $tt=(int)(time()/86400);
@@ -13,7 +14,7 @@ $query=mysqli_query($con,"select title,author,genre,duration from track where id
 $row=mysqli_fetch_assoc($query);
 $dura=(int)$row["duration"];
 mysqli_free_result($query);
-$next=$xx+$dura-time()+17;
+$next=$xx+$dura-time()+$dtq;
 
 echo "<script>\n";
 echo "var y=$next;\n";
@@ -64,7 +65,7 @@ $vv=$xx;
 for($i=$f;$i<$pp;$i++){
   $query=mysqli_query($con,"select duration from track where id='$seq[$i]'");
   $row=mysqli_fetch_assoc($query);
-  $vv-=(int)$row["duration"];
+  $vv=$vv-(int)$row["duration"]-$dtq;
   mysqli_free_result($query);
 }
 for($i=$f;$i<=$t;$i++){
@@ -77,7 +78,7 @@ for($i=$f;$i<=$t;$i++){
   echo " | ".mystr($row["genre"],20);
   echo " | ".(int)$row["duration"]."s\n";
   if($i==$pp)echo "</font>";
-  $vv+=(int)$row["duration"];
+  $vv=$vv+(int)$row["duration"]+$dtq;
   mysqli_free_result($query);
 }
 echo "Prossimo brano tra: <div style='display: inline' id='cdw'></div>s\n\n";
