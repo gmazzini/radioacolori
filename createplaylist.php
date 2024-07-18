@@ -5,7 +5,6 @@ $tt=(int)(time()/86400)+1;
 $special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE");
 $avoid=array("INNOVAZIONE");
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
-// $p1="/home/ices/music/voice/";
 $p2="/home/ices/music/ogg04/";
 $p3="/home/ices/music/ogg04v/";
 $fp=fopen("/home/ices/playlist.txt","wt");
@@ -117,9 +116,6 @@ for($i=0;$i<$nc;$i++){
     $el++;
     fprintf($fp,"%s%s.ogg\n",$p2,$ida);
     fprintf($fp,"%s%s.ogg\n",$p3,$ida);
-    // fprintf($fp,"%sintro.ogg\n",$p1);
-    // for($j=0;$j<5;$j++)fprintf($fp,"%sn%s.ogg\n",$p1,substr($ida,$j,1));
-    // fprintf($fp,"%scoda.ogg\n",$p1);
     
     $query=mysqli_query($con,"select duration from track where id='$ida'");
     $row=mysqli_fetch_assoc($query);
