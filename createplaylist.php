@@ -2,7 +2,7 @@
 include "local.php";
 $runm=(int)$argv[1];
 $tt=(int)(time()/86400)+1;
-$special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE");
+$special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE","POESIE");
 $avoid=array("INNOVAZIONE");
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p2="/home/ices/music/ogg04/";
