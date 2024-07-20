@@ -34,14 +34,14 @@ function myshuffle(&$a,$f,$t){
 
 $query=mysqli_query($con,"select id,used,duration from track where score=2 and genre not in $listout order by used");
 $nm2=0;
-$maxduration2=0;
+$maxdurationm2=0;
 $fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idm2[$nm2]=$row["id"];
   $duration[$row["id"]]=$row["duration"];
-  $maxduration2+=$row["duration"];
+  $maxdurationm2+=$row["duration"];
   $auxused=$row["used"];
   if($nm2==0)$lastused=$auxused;
   elseif($lastused<>$auxused){
@@ -92,8 +92,8 @@ for(;;){
 mysqli_free_result($query);
 
 mysqli_query($con,"delete from playlist where tt=$tt");
-$hitm2=100*$maxduration2/(86400*$ratio/($ratio+1));
-echo "ratio=$ratio hitm2=$hitm2 maxsuration2=$maxduration2\n";
+$hitm2=100*$maxdurationm2/(86400*$ratio/($ratio+1));
+printf("ratio=%4.1f hitm2=%4.1f maxdurationm2=6.1f\n",$ratio,$hitm2,$maxdurationm2);
 if($hitm2>100)$hitm2=100;
 $ic=$iq1=$iq2=0;
 $um1=$um2=$uc=0;
@@ -132,6 +132,6 @@ for($z=1;;){
 }
 mysqli_close($con);
 fclose($fp);
-echo "$totalduration $nm2:$um2 $nm1:$um1 $nc:$uc\n";
+printf("totduration=%6.1f nm2=%d,um2=%d nm1=%d,um1=%d nc=%d,uc=%d\n",$totalduration,$nm2,$um2,$nm1,$um1,$nc,$uc);
 
 ?>
