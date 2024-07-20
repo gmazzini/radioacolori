@@ -1,6 +1,6 @@
 <?php
 include "local.php";
-$ratio=(float)$argv[1];
+$ratio=(float)$argv[1]; //final ratio among music time with respect to content time
 $tt=(int)(time()/86400)+1;
 $special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE","POESIE");
 $avoid=array("INNOVAZIONE");
@@ -34,12 +34,14 @@ function myshuffle(&$a,$f,$t){
 
 $query=mysqli_query($con,"select id,used,duration from track where score=2 and genre not in $listout order by used");
 $nm2=0;
+$maxduration2=0;
 $fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idm2[$nm2]=$row["id"];
   $duration[$row["id"]]=$row["duration"];
+  $maxduration2+=$row["duration"];
   $auxused=$row["used"];
   if($nm2==0)$lastused=$auxused;
   elseif($lastused<>$auxused){
@@ -90,27 +92,23 @@ for(;;){
 mysqli_free_result($query);
 
 mysqli_query($con,"delete from playlist where tt=$tt");
-for(;;){
-  
-
-
-
-
-
-$nq1=(int)($nm1/$nc);
-$nq2=(int)($nm2/$nc);
-$iq1=$iq2=0;
+$hitm2=$maxduration2/86400*$ratio/($ratio+1);
+if($hitm2>100)$hitm2=100;
+$ic=$iq1=$iq2=0;
 $um1=$um2=$uc=0;
-$duration=0;
+$totalduration=0;
 $el=0;
-
-for($i=0;$i<$nc;$i++){
-  for($q=0;$q<=$runm;$q++){
-    if($q==$runm){
-      $ida=$idc[$i];
-      $uc++;
-    }
-    else if($q<$nq2){
+for($z=1;;){
+  if($z){
+    $auxid=$idc[$i];
+    if(++$ic>=$nc)$ic=0;
+    $uc++;
+    $lastdurationcontent=$duration[$auxid];
+    $lastdurationmusic=0;
+    $z=0;
+  }
+  else {
+    if(rand(0,100)<=$hitm2){
       $ida=$idm2[$iq2];
       if(++$iq2>=$nm2)$iq2=0;
       $um2++;
@@ -120,22 +118,19 @@ for($i=0;$i<$nc;$i++){
       if(++$iq1>=$nm1)$iq1=0;
       $um1++;
     }
-    
-    mysqli_query($con,"insert into playlist (tt,id,position) values ($tt,'$ida',$el)");
-    mysqli_query($con,"update track set used=used+1 where id='$ida'");
-    $el++;
-    fprintf($fp,"%s%s.ogg\n",$p2,$ida);
-    fprintf($fp,"%s%s.ogg\n",$p3,$ida);
-    
-    $query=mysqli_query($con,"select duration from track where id='$ida'");
-    $row=mysqli_fetch_assoc($query);
-    $duration+=$row["duration"];
-    mysqli_free_result($query);
-    if($duration>86400)break;
+    $lastdurationmusic+=$duration[$auxid];
+    if($lastdurationmusic>$lastdurationcontent*$ratio)$z=1;
   }
+  mysqli_query($con,"insert into playlist (tt,id,position) values ($tt,'$ida',$el)");
+  mysqli_query($con,"update track set used=used+1 where id='$ida'");
+  $el++;
+  fprintf($fp,"%s%s.ogg\n",$p2,$ida);
+  fprintf($fp,"%s%s.ogg\n",$p3,$ida);
+  $totalduration+=$duration[$auxid];
+  if($totalduration>86400)break;
 }
 mysqli_close($con);
 fclose($fp);
-echo "$duration $nm2:$um2 $nm1:$um1 $nc:$uc\n";
+echo "$totalduration $nm2:$um2 $nm1:$um1 $nc:$uc\n";
 
 ?>
