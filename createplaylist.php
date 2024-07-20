@@ -92,7 +92,7 @@ for(;;){
 mysqli_free_result($query);
 
 mysqli_query($con,"delete from playlist where tt=$tt");
-$hitm2=$maxduration2/86400*$ratio/($ratio+1);
+$hitm2=100*$maxduration2/(86400*$ratio/($ratio+1));
 echo "ratio=$ratio hitm2=$hitm2 maxsuration2=$maxduration2\n";
 if($hitm2>100)$hitm2=100;
 $ic=$iq1=$iq2=0;
