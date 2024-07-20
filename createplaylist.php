@@ -1,6 +1,6 @@
 <?php
 include "local.php";
-$runm=(int)$argv[1];
+$ratio=(float)$argv[1];
 $tt=(int)(time()/86400)+1;
 $special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE","POESIE");
 $avoid=array("INNOVAZIONE");
@@ -32,13 +32,14 @@ function myshuffle(&$a,$f,$t){
   }
 }
 
-$query=mysqli_query($con,"select id,used from track where score=2 and genre not in $listout order by used");
+$query=mysqli_query($con,"select id,used,duration from track where score=2 and genre not in $listout order by used");
 $nm2=0;
 $fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idm2[$nm2]=$row["id"];
+  $duration[$row["id"]]=$row["duration"];
   $auxused=$row["used"];
   if($nm2==0)$lastused=$auxused;
   elseif($lastused<>$auxused){
@@ -50,13 +51,14 @@ for(;;){
 }
 mysqli_free_result($query);
 
-$query=mysqli_query($con,"select id,used from track where score=1 and genre not in $listout order by used");
+$query=mysqli_query($con,"select id,used,duration from track where score=1 and genre not in $listout order by used");
 $nm1=0;
 $fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idm1[$nm1]=$row["id"];
+  $duration[$row["id"]]=$row["duration"];
   $auxused=$row["used"];
   if($nm1==0)$lastused=$auxused;
   elseif($lastused<>$auxused){
@@ -68,13 +70,14 @@ for(;;){
 }
 mysqli_free_result($query);
 
-$query=mysqli_query($con,"select id,used from track where score=2 and genre in $listin order by used");
+$query=mysqli_query($con,"select id,used,duration from track where score=2 and genre in $listin order by used");
 $nc=0;
 $fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idc[$nc]=$row["id"];
+  $duration[$row["id"]]=$row["duration"];
   $auxused=$row["used"];
   if($nc==0)$lastused=$auxused;
   elseif($lastused<>$auxused){
@@ -87,6 +90,13 @@ for(;;){
 mysqli_free_result($query);
 
 mysqli_query($con,"delete from playlist where tt=$tt");
+for(;;){
+  
+
+
+
+
+
 $nq1=(int)($nm1/$nc);
 $nq2=(int)($nm2/$nc);
 $iq1=$iq2=0;
