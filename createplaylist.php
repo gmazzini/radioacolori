@@ -100,7 +100,7 @@ $totalduration=0;
 $el=0;
 for($z=1;;){
   if($z){
-    $auxid=$idc[$i];
+    $auxid=$idc[$ic];
     if(++$ic>=$nc)$ic=0;
     $uc++;
     $lastdurationcontent=$duration[$auxid];
