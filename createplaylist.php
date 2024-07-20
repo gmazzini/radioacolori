@@ -109,23 +109,23 @@ for($z=1;;){
   }
   else {
     if(rand(0,100)<=$hitm2){
-      $ida=$idm2[$iq2];
+      $auxid=$idm2[$iq2];
       if(++$iq2>=$nm2)$iq2=0;
       $um2++;
     }
     else {
-      $ida=$idm1[$iq1];
+      $auxid=$idm1[$iq1];
       if(++$iq1>=$nm1)$iq1=0;
       $um1++;
     }
     $lastdurationmusic+=$duration[$auxid];
     if($lastdurationmusic>$lastdurationcontent*$ratio)$z=1;
   }
-  mysqli_query($con,"insert into playlist (tt,id,position) values ($tt,'$ida',$el)");
-  mysqli_query($con,"update track set used=used+1 where id='$ida'");
+  mysqli_query($con,"insert into playlist (tt,id,position) values ($tt,'$auxid',$el)");
+  mysqli_query($con,"update track set used=used+1 where id='$auxid'");
   $el++;
-  fprintf($fp,"%s%s.ogg\n",$p2,$ida);
-  fprintf($fp,"%s%s.ogg\n",$p3,$ida);
+  fprintf($fp,"%s%s.ogg\n",$p2,$$auxid);
+  fprintf($fp,"%s%s.ogg\n",$p3,$auxid);
   $totalduration+=$duration[$auxid];
   if($totalduration>86400)break;
 }
