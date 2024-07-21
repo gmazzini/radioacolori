@@ -16,6 +16,8 @@ $vv=0;
 for($j=0;$j<$i;$j++){
   $query=mysqli_query($con,"select title,author,genre,duration,used,score from track where id='$id[$j]'");
   $row=mysqli_fetch_assoc($query);
+  $zz=in_arrY($row["genre"],$special);
+  if($zz)echo "<font color='red'>";
   echo date("H:i",$vv)." | ".$id[$j];
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
@@ -23,6 +25,7 @@ for($j=0;$j<$i;$j++){
   echo " | ".mystr2((int)$row["duration"],4)."s";
   echo " | ".mystr2($row["used"],3);
   echo " | ".mystr2($row["score"],1);
+  if($zz)echo "</font>";
   echo "\n";
   $vv=$vv+(int)$row["duration"]+$dtq;
   mysqli_free_result($query);
