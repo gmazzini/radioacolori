@@ -86,7 +86,7 @@ echo "Email info at radioacolori.net\nCF 91357680379 - ROC 33355\n</p>";
 mysqli_close($con);
 
 function mystr($a,$l){
-  $la=strlen($a);
+  $la=mb_strlen($a);
   if($la>=$l)return substr($a,0,$l-3)."...";
   if($la==$l-1)return substr($a,0,$l-2)."..";
   if($la==$l-2)return substr($a,0,$l-2).".";
