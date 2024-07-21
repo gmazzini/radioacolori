@@ -11,6 +11,20 @@ for($i=0;;$i++){
 }
 mysqli_free_result($query);
 
+echo "<pre>";
+$vv=0;
+for($j=0;$j<$i;$j++){
+  $query=mysqli_query($con,"select title,author,genre,duration from track where id='$id[$j]'");
+  $row=mysqli_fetch_assoc($query);
+  echo date("H:i",$vv)." | ".$id[$j];
+  echo " | ".mystr($row["title"],40);
+  echo " | ".mystr($row["author"],30);
+  echo " | ".mystr($row["genre"],20);
+  echo " | ".(int)$row["duration"]."s\n";
+  $vv=$vv+(int)$row["duration"]+$dtq;
+  mysqli_free_result($query);
+}
+
 mysqli_close($con);
 
 
