@@ -20,9 +20,9 @@ for($j=0;$j<$i;$j++){
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
-  echo " | ".mystr((int)$row["duration"],4)."s";
-  echo " | ".mystr($row["used"],3);
-  echo " | ".mystr($row["score"],1);
+  echo " | ".mystr2((int)$row["duration"],4)."s";
+  echo " | ".mystr2($row["used"],3);
+  echo " | ".mystr2($row["score"],1);
   echo "\n";
   $vv=$vv+(int)$row["duration"]+$dtq;
   mysqli_free_result($query);
@@ -34,6 +34,10 @@ function mystr($a,$l){
   if($la>=$l)return substr($a,0,$l-3)."...";
   if($la==$l-1)return substr($a,0,$l-2)."..";
   if($la==$l-2)return substr($a,0,$l-2).".";
+  return $a.str_repeat(" ",$l-$la);
+}
+function mystr2($a,$l){
+  $la=strlen($a);
   return $a.str_repeat(" ",$l-$la);
 }
 ?>
