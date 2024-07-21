@@ -1,6 +1,5 @@
 <?php
 include "local.php";
-$dtq=17;
 date_default_timezone_set("Europe/Rome");
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $tt=(int)(time()/86400);
