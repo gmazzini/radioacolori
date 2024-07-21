@@ -16,7 +16,7 @@ $vv=0;
 for($j=0;$j<$i;$j++){
   $query=mysqli_query($con,"select title,author,genre,duration,used,score from track where id='$id[$j]'");
   $row=mysqli_fetch_assoc($query);
-  $zz=in_arrY($row["genre"],$special);
+  $zz=in_array($row["genre"],$special);
   if($zz)echo "<font color='red'>";
   echo date("H:i",$vv)." | ".$id[$j];
   echo " | ".mystr($row["title"],40);
