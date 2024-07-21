@@ -1,7 +1,7 @@
 <?php
 include "local.php";
-$special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE","POESIE");
 $tt=(int)(time()/86400);
+$con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 
 $query=mysqli_query($con,"select id from playlist where tt=$tt order by playlist");
 for($i=0;;$i++){
