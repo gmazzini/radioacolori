@@ -20,9 +20,9 @@ for($j=0;$j<$i;$j++){
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
-  echo " | ".(int)mystr($row["duration"],4)."s";
-  echo " | ".(int)mystr($row["used"],3);
-  echo " | ".(int)mystr($row["score"],1);
+  echo " | ".mystr((int)$row["duration"],4)."s";
+  echo " | ".mystr($row["used"],3);
+  echo " | ".mystr($row["score"],1);
   echo "\n";
   $vv=$vv+(int)$row["duration"]+$dtq;
   mysqli_free_result($query);
