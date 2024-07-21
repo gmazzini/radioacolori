@@ -24,8 +24,13 @@ for($j=0;$j<$i;$j++){
   $vv=$vv+(int)$row["duration"]+$dtq;
   mysqli_free_result($query);
 }
-
 mysqli_close($con);
 
-
+function mystr($a,$l){
+  $la=strlen($a);
+  if($la>=$l)return substr($a,0,$l-3)."...";
+  if($la==$l-1)return substr($a,0,$l-2)."..";
+  if($la==$l-2)return substr($a,0,$l-2).".";
+  return $a.str_repeat(" ",$l-$la);
+}
 ?>
