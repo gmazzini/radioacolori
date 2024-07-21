@@ -34,7 +34,7 @@ mysqli_close($con);
 
 function mystr($a,$l){
   $la=mb_strlen($a);
-  if($la>=$l)return mb_substr($a,0,$l);
+  if($la>=$l)return mb_substr($a,0,$l-1).">";
   return $a.str_repeat(" ",$l-$la);
 }
 function mystr2($a,$l){
