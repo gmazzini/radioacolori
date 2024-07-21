@@ -2,8 +2,6 @@
 include "local.php";
 $ratio=(float)$argv[1]; //final ratio among music time with respect to content time
 $tt=(int)(time()/86400)+1;
-$special=array("RADIOAMATORI","SCIENZA","STORIE DEL NAVILE","POESIE");
-$avoid=array("INNOVAZIONE");
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p2="/home/ices/music/ogg04/";
 $p3="/home/ices/music/ogg04v/";
