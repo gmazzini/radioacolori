@@ -3,7 +3,7 @@ include "local.php";
 $tt=(int)(time()/86400);
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 
-$query=mysqli_query($con,"select id from playlist where tt=$tt order by sequence");
+$query=mysqli_query($con,"select id from playlist where tt=$tt order by position");
 for($i=0;;$i++){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
