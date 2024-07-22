@@ -11,7 +11,7 @@ $id=current(explode(".",end(explode("/",$ll[$i]))));
 $xx=strtotime(substr($ll[$i],1,20));
 $query=mysqli_query($con,"select title,author,genre,duration,duration_extra from track where id='$id'");
 $row=mysqli_fetch_assoc($query);
-$next=$xx-time()+$row["duration"]+$row["duration_extra"];
+$next=(int)($xx-time()+$row["duration"]+$row["duration_extra"]);
 mysqli_free_result($query);
 
 echo "<script>\n";
