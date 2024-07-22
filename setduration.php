@@ -10,9 +10,10 @@ for(;;){
   if($row==null)break;
   $id=$row["id"];
   $dd=json_decode(shell_exec("ffprobe -v quiet -print_format json -show_streams -hide_banner $p2/$id.ogg"),true);
-  print_r($dd);
   $duration=$dd["streams"][0]["duration"];
-  echo $duration;
+  $dd=json_decode(shell_exec("ffprobe -v quiet -print_format json -show_streams -hide_banner $p3/$id.ogg"),true);
+  $duration_extra=$dd["streams"][0]["duration"];
+  echo "$id $duration $duration_extra\n";
   
   exit(0);
   
