@@ -27,7 +27,7 @@ for($j=0;$j<$i;$j++){
   echo " | ".mystr2($row["score"],1);
   if($zz)echo "</font>";
   echo "\n";
-  $vv=$vv+(int)$row["duration"]+$dtq;
+  $vv=$vv+$row["duration"]+$dtq;
   mysqli_free_result($query);
 }
 mysqli_close($con);
