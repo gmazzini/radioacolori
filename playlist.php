@@ -14,7 +14,7 @@ mysqli_free_result($query);
 echo "<pre>";
 $vv=86400-60;;
 for($j=0;$j<$i;$j++){
-  $query=mysqli_query($con,"select title,author,genre,duration,used,score from track where id='$id[$j]'");
+  $query=mysqli_query($con,"select title,author,genre,duration,duration_extra,used,score from track where id='$id[$j]'");
   $row=mysqli_fetch_assoc($query);
   $zz=in_array($row["genre"],$special);
   if($zz)echo "<font color='blue'>";
@@ -27,7 +27,7 @@ for($j=0;$j<$i;$j++){
   echo " | ".mystr2($row["score"],1);
   if($zz)echo "</font>";
   echo "\n";
-  $vv=$vv+$row["duration"]+$dtq;
+  $vv=$vv+$row["duration"]+$row["duration_extra"];
   mysqli_free_result($query);
 }
 mysqli_close($con);
