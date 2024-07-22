@@ -4,7 +4,7 @@ $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p2="/home/ices/music/ogg04/";
 $p3="/home/ices/music/ogg04v/";
 
-$query=mysqli_query($con,"select id from track where (duration=0 or duration_extra=0) and score>0");
+$query=mysqli_query($con,"select id from track where (duration==0 or duration_extra==0) and score>0");
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
