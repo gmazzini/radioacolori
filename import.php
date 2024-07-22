@@ -20,8 +20,8 @@ foreach($oo["values"] as $k => $v){
   $row=mysqli_fetch_row($query);
   $presence=$row[0];
   mysqli_free_result($query);
-  if($presence)mysqli_query($con,"update track set duration=$duration,title='$title',author='$author',genre='$genre',score=$score where id='$id'");
-  else mysqli_query($con,"insert into track (id,duration,title,author,genre,score) values ('$id',$duration,'$title','$author','$genre',$score)");
+  if($presence)mysqli_query($con,"update track set title='$title',author='$author',genre='$genre',score=$score where id='$id'");
+  else mysqli_query($con,"insert into track (id,title,author,genre,score) values ('$id','$title','$author','$genre',$score)");
 }
 mysqli_close($con);
 
