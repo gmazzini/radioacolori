@@ -9,7 +9,7 @@ for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $id=$row["id"];
-  $dd=json_decode(exec_shell("ffprobe -v quiet -print_format json -show_streams -hide_banner $p2/$id.ogg"));
+  $dd=json_decode(shell_exec("ffprobe -v quiet -print_format json -show_streams -hide_banner $p2/$id.ogg"));
   print_r($dd);
   exit(0);
   
