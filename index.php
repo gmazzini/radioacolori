@@ -70,7 +70,7 @@ for($i=$f;$i<=$t;$i++){
   $query=mysqli_query($con,"select title,author,genre,duration,duration_extra from track where id='$seq[$i]'");
   $row=mysqli_fetch_assoc($query);
   if($i==$pp)echo "<font color='red'>";
-  echo date("H:i",$vv)." | ".$seq[$i];
+  echo date("H:i:s",$vv)." | ".$seq[$i];
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
