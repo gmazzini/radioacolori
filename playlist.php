@@ -12,13 +12,13 @@ for($i=0;;$i++){
 mysqli_free_result($query);
 
 echo "<pre>";
-$vv=0;
+$vv=86400-60;;
 for($j=0;$j<$i;$j++){
   $query=mysqli_query($con,"select title,author,genre,duration,used,score from track where id='$id[$j]'");
   $row=mysqli_fetch_assoc($query);
   $zz=in_array($row["genre"],$special);
   if($zz)echo "<font color='blue'>";
-  echo date("H:i",$vv)." | ".$id[$j];
+  echo date("H:i:s",$vv)." | ".$id[$j];
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
