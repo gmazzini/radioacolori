@@ -11,6 +11,15 @@ for($i=0;;$i++){
 }
 mysqli_free_result($query);
 
+$ll=file("/var/log/ices/ices.log");
+for($i=count($ll)-1;$i>0;$i--){
+  if(strpos($ll[$i],"Currently playing \"/home/ices/music/ogg04/")!==false){
+    $logid=current(explode(".",end(explode("/",$ll[$i]))));
+    $logtime[$logid]=strtotime(substr($ll[$i],1,20));
+    if($logid==$id[0])break;
+  }
+}
+
 echo "<pre>";
 $vv=86400-60;;
 for($j=0;$j<$i;$j++){
@@ -19,6 +28,7 @@ for($j=0;$j<$i;$j++){
   $zz=in_array($row["genre"],$special);
   if($zz)echo "<font color='blue'>";
   echo date("H:i:s",$vv)." | ".$id[$j];
+  echo " | ".date("H:i:s",$logtime[$id[$j]]);
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
