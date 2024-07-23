@@ -28,7 +28,7 @@ for($j=0;$j<$i;$j++){
   $zz=in_array($row["genre"],$special);
   if($zz)echo "<font color='blue'>";
   echo date("H:i:s",$vv)." | ".$id[$j];
-  echo " | ".date("H:i:s",$logtime[$id[$j]]);
+  if(isset($logtime[$id[$j]]))echo " | ".date("H:i:s",$logtime[$id[$j]]);
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
