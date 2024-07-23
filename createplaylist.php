@@ -126,7 +126,7 @@ for($z=1;;){
   fprintf($fp,"%s%s.ogg\n",$p2,$auxid);
   fprintf($fp,"%s%s.ogg\n",$p3,$auxid);
   $totalduration+=$duration[$auxid];
-  if($totalduration>87000)break;
+  if($totalduration>86400)break;
 }
 mysqli_close($con);
 fclose($fp);
