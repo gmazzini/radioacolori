@@ -2,7 +2,7 @@
 include "local.php";
 $tt=(int)(time()/86400);
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
-$corr=-1.0;
+$corr=0.45;
 
 $query=mysqli_query($con,"select id from playlist where tt=$tt order by position");
 for($i=0;;$i++){
@@ -44,7 +44,7 @@ for($j=0;$j<$i;$j++){
   echo " | ".mystr2($row["score"],1);
   if($zz)echo "</font>";
   echo "\n";
-  $vv+=round($row["duration"]-0.5,2)+round($row["duration_extra"]-0.5,2);
+  $vv+=round($row["duration"]-$corr,2)+round($row["duration_extra"]-$corr,2);
   mysqli_free_result($query);
 }
 mysqli_close($con);
