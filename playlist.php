@@ -27,9 +27,10 @@ for($j=0;$j<$i;$j++){
   $row=mysqli_fetch_assoc($query);
   $zz=in_array($row["genre"],$special);
   if($zz)echo "<font color='blue'>";
-  echo date("H:i:s",$vv)." | ".$id[$j];
+  echo date("H:i:s",$vv);
   if(isset($logtime[$id[$j]]))echo " | ".date("H:i:s",$logtime[$id[$j]]);
   else echo " |         ";
+  echo " | ".$id[$j];
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
