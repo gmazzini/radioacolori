@@ -2,7 +2,7 @@
 include "local.php";
 $tt=(int)(time()/86400);
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
-$corr=0.45;
+$corr=0.49;
 
 $query=mysqli_query($con,"select id from playlist where tt=$tt order by position");
 for($i=0;;$i++){
