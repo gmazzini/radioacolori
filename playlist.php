@@ -12,10 +12,10 @@ for($i=0;;$i++){
 mysqli_free_result($query);
 
 $ll=file("/var/log/ices/ices.log");
-for($i=count($ll)-1;$i>0;$i--){
-  if(strpos($ll[$i],"Currently playing \"/home/ices/music/ogg04/")!==false){
-    $logid=current(explode(".",end(explode("/",$ll[$i]))));
-    $logtime[$logid]=strtotime(substr($ll[$i],1,20));
+for($zz=count($ll)-1;$zz>0;$zz--){
+  if(strpos($ll[$zz],"Currently playing \"/home/ices/music/ogg04/")!==false){
+    $logid=current(explode(".",end(explode("/",$ll[$zz]))));
+    $logtime[$logid]=strtotime(substr($ll[$zz],1,20));
     if($logid==$id[0])break;
   }
 }
