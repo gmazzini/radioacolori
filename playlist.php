@@ -44,7 +44,7 @@ for($j=0;$j<$i;$j++){
   echo " | ".mystr2($row["score"],1);
   if($zz)echo "</font>";
   echo "\n";
-  $vv=$vv+$row["duration"]+$row["duration_extra"]+$corr;
+  $vv+=round($row["duration"],2)+round($row["duration_extra"],2);
   mysqli_free_result($query);
 }
 mysqli_close($con);
