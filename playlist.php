@@ -33,7 +33,7 @@ for($j=0;$j<$i;$j++){
   echo date("H:i:s",$vv);
   if(isset($usemul[$id[$j]]))$usemul[$id[$j]]++;
   else $usemul[$id[$j]]=1;
-  if(isset($logtime[$id[$j]].$usemul[$id[$j]]))echo " | ".date("H:i:s",$logtime[$id[$j]].$usemul[$id[$j]]);
+  if(isset($logtime[$id[$j].$usemul[$id[$j]]]))echo " | ".date("H:i:s",$logtime[$id[$j].$usemul[$id[$j]]]);
   else echo " |         ";
   echo " | ".$id[$j];
   echo " | ".mystr($row["title"],40);
