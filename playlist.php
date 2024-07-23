@@ -16,7 +16,7 @@ $ll=file("/var/log/ices/ices.log");
 for($zz=count($ll)-1;$zz>0;$zz--){
   if(strpos($ll[$zz],"Currently playing \"/home/ices/music/ogg04/")!==false){
     $logid=current(explode(".",end(explode("/",$ll[$zz]))));
-    if(isset($logmul[$logid])$logmul[$logid]++;
+    if(isset($logmul[$logid]))$logmul[$logid]++;
     else $logmul[$logid]=1;
     $logtime[$logid.$logmul[$logid]]=strtotime(substr($ll[$zz],1,20));
     if($logid==$id[0])break;
@@ -31,7 +31,7 @@ for($j=0;$j<$i;$j++){
   $zz=in_array($row["genre"],$special);
   if($zz)echo "<font color='blue'>";
   echo date("H:i:s",$vv);
-  if(isset($usemul[$id[$j]])$usemul[$id[$j]]++;
+  if(isset($usemul[$id[$j]]))$usemul[$id[$j]]++;
   else $usemul[$id[$j]]=1;
   if(isset($logtime[$id[$j]].$usemul[$id[$j]]))echo " | ".date("H:i:s",$logtime[$id[$j]].$usemul[$id[$j]]);
   else echo " |         ";
