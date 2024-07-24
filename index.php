@@ -25,7 +25,7 @@ echo "</script>\n";
 
 echo "<pre><table>";
 echo "<td><img src='logo.jpg' width='10%' height='auto'></td>";
-echo "<audio controls><source src='http://radioacolori.net:8000/stream'></audio>";
+echo "<audio controls><source src='http://radioacolori.net:8000/stream' typr='audio/ogg'></audio>";
 echo "<td><pre><form method='post'><input type='text' name='myid'><input type='submit' value='Cerca'></form>";
 $ids=$_POST["myid"];
 $query1=mysqli_query($con,"select title,author,genre,duration from track where id='$ids'");
