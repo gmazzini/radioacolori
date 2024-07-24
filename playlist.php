@@ -12,7 +12,7 @@ for($i=0;;$i++){
 }
 mysqli_free_result($query);
 
-$ll=file("/var/log/ices/ices.log");
+$ll=array_merge(file("/var/log/ices/ices.log.old",file("/var/log/ices/ices.log"));
 for($zz=count($ll)-1;$zz>0;$zz--){
   if(strpos($ll[$zz],"Currently playing \"/home/ices/music/ogg04/")!==false){
     $logid=current(explode(".",end(explode("/",$ll[$zz]))));
