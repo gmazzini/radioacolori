@@ -121,7 +121,7 @@ for($z=1;;){
     if($lastdurationmusic>$lastdurationcontent*$ratio)$z=1;
   }
   mysqli_query($con,"insert into playlist (tt,id,position) values ($tt,'$auxid',$el)");
-  mysqli_query($con,"update track set used=used+1 where id='$auxid'");
+  mysqli_query($con,"update track set used=used+1,last=$tt where id='$auxid'");
   $el++;
   fprintf($fp,"%s%s.ogg\n",$p2,$auxid);
   fprintf($fp,"%s%s.ogg\n",$p3,$auxid);
