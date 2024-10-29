@@ -3,7 +3,7 @@ include "local.php";
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $access_token=file_get_contents("/home/www/music.mazzini.org/web/access_token");
 $ch=curl_init();
-curl_setopt($ch,CURLOPT_URL,"https://sheets.googleapis.com/v4/spreadsheets/1P3DRLJsepd4gmaYhf2XhqIV4_NIArscaO5Jz1h1pmyU/values/brani!A2:J");
+curl_setopt($ch,CURLOPT_URL,"https://sheets.googleapis.com/v4/spreadsheets/1P3DRLJsepd4gmaYhf2XhqIV4_NIArscaO5Jz1h1pmyU/values/brani!A2:L");
 curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,FALSE);
 curl_setopt($ch,CURLOPT_HTTPHEADER,Array("Content-Type: application/json","Authorization: Bearer ".$access_token));
 curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
@@ -14,14 +14,16 @@ foreach($oo["values"] as $k => $v){
   $title=mysqli_real_escape_string($con,$v[6]);
   $author=mysqli_real_escape_string($con,$v[7]); 
   $genre=mysqli_real_escape_string($con,$v[8]); 
+  $gid=$v[10];
+  $gsel=(int)$v[11];
   $duration=str_replace(",","",$v[5]);
   $score=(int)$v[1];
   $query=mysqli_query($con,"select count(id) from track where id='$id'");
   $row=mysqli_fetch_row($query);
   $presence=$row[0];
   mysqli_free_result($query);
-  if($presence)mysqli_query($con,"update track set title='$title',author='$author',genre='$genre',score=$score where id='$id'");
-  else mysqli_query($con,"insert into track (id,title,author,genre,score) values ('$id','$title','$author','$genre',$score)");
+  if($presence)mysqli_query($con,"update track set title='$title',author='$author',genre='$genre',score=$score,gid='$gid',gsel=$gsel where id='$id'");
+  else mysqli_query($con,"insert into track (id,title,author,genre,score,gid,gsel) values ('$id','$title','$author','$genre',$score,'$gid',$gsel)");
 }
 mysqli_close($con);
 
