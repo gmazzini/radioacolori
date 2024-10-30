@@ -22,15 +22,6 @@ foreach($avoid as $k => $v){
 }
 $listout.=")"; $listin.=")";
 
-function myshuffle(&$a,$f,$t){
-  for($j=$t;$j>$f;$j--){
-    $r=rand($f,$t);
-    $aux=$a[$j];
-    $a[$j]=$a[$r];
-    $a[$r]=$aux;
-  }
-}
-
 // music list with higher score and far used for score=2
 $query=mysqli_query($con,"select id,duration from track where score=2 and genre not in $listout order by last asc,id asc,score desc;);
 $nm2=0;
