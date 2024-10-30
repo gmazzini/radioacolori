@@ -31,17 +31,25 @@ function myshuffle(&$a,$f,$t){
   }
 }
 
-// music list with higher score and far used
-$query=mysqli_query($con,"select id,duration from track where score>0 and genre not in $listout order by last asc,id asc,score desc;);
-$nm=0;
-$maxdurationm2=0;
-$fromsh=0;
+// music list with higher score and far used for score=2
+$query=mysqli_query($con,"select id,duration from track where score=2 and genre not in $listout order by last asc,id asc,score desc;);
+$nm2=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm[$nm]=$row["id"];
+  $idm[$nm2++]=$row["id"];
   $duration[$row["id"]]=$row["duration"];
-  $nm++;
+}
+mysqli_free_result($query);
+
+// music list with higher score and far used for score=1
+$query=mysqli_query($con,"select id,duration from track where score=1 and genre not in $listout order by last asc,id asc,score desc;);
+$nm1=0;
+for(;;){
+  $row=mysqli_fetch_assoc($query);
+  if($row==null)break;
+  $idm[$nm1++]=$row["id"];
+  $duration[$row["id"]]=$row["duration"];
 }
 mysqli_free_result($query);
 
@@ -64,14 +72,13 @@ for(;;){
     for(;;){
       $row2=mysqli_fetch_assoc($query2);
       if($row2==null)break;
-      $idc[$nc]=$row2["id"];
+      $idc[$nc++]=$row2["id"];
       $duration[$row2["id"]]=$row2["duration"];
-      $nc++;
     }
     mysqli_free_result($query2);
   }
   if(in_array($row["id"],$idc))continue;
-  $idc[$nc]=$row["id"];
+  $idc[$nc++]=$row["id"];
   $duration[$row["id"]]=$row["duration"];
   $nc++;
 }
