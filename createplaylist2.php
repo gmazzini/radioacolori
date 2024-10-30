@@ -5,8 +5,9 @@ $tt=(int)(time()/86400)+1;
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p2="/home/ices/music/ogg04/";
 $p3="/home/ices/music/ogg04v/";
-$fp=fopen("/home/ices/playlist.txt","wt");
+$fp=fopen("/home/ices/playlist2.txt","wt");
 
+// list of content (lintin) by admitted genre and no used content (listout)
 $listout="("; $listin="(";
 $co=0;
 foreach($special as $k => $v){
@@ -30,69 +31,57 @@ function myshuffle(&$a,$f,$t){
   }
 }
 
-$query=mysqli_query($con,"select id,used,duration from track where score=2 and genre not in $listout order by used");
-$nm2=0;
+// music list with higher score and far used
+$query=mysqli_query($con,"select id,duration from track where score>0 and genre not in $listout order by last asc,id asc,score desc;);
+$nm=0;
 $maxdurationm2=0;
 $fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm2[$nm2]=$row["id"];
+  $idm[$nm]=$row["id"];
   $duration[$row["id"]]=$row["duration"];
-  $maxdurationm2+=$row["duration"];
-  $auxused=$row["used"];
-  if($nm2==0)$lastused=$auxused;
-  elseif($lastused<>$auxused){
-    myshuffle($idm2,$fromsh,$nm2-1);
-    $fromsh=$nm2;
-    $lastused=$auxused;
-  }
-  $nm2++;
+  $nm++;
 }
 mysqli_free_result($query);
 
-$query=mysqli_query($con,"select id,used,duration from track where score=1 and genre not in $listout order by used");
-$nm1=0;
-$fromsh=0;
-for(;;){
-  $row=mysqli_fetch_assoc($query);
-  if($row==null)break;
-  $idm1[$nm1]=$row["id"];
-  $duration[$row["id"]]=$row["duration"];
-  $auxused=$row["used"];
-  if($nm1==0)$lastused=$auxused;
-  elseif($lastused<>$auxused){
-    myshuffle($idm1,$fromsh,$nm1-1);
-    $fromsh=$nm1;
-    $lastused=$auxused;
-  }
-  $nm1++;
-}
-mysqli_free_result($query);
-
-$query=mysqli_query($con,"select id,used,duration from track where score=2 and genre in $listin order by used");
+// content list with score=2 and far used with group processing
+$query=mysqli_query($con,"select id,duration,gid from track where score=2 and genre in $listin order by last asc,id asc");
 $nc=0;
-$fromsh=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
+  $gid=$row["gid"];
+  if(strlen($gid)==5){
+    $query2=mysqli_query($con,"select min(last),max(last) from track where score=2 and genre in $listin and gid='$gid'");
+    $row2=mysqli_fetch_row($query);
+    $lastmin=$row[0];
+    $lastmax=$row[1];
+    mysqli_free_result($query2);
+    if($lastmin<$lastmax)$lastlim=$lastmax;
+    else $lastlim=$lastmax+1;
+    $query2=mysqli_query($con,"select id,duration from track where score=2 and genre in $listin and gid='$gid' and last<$lastlim order by gsel asc");
+    for(;;){
+      $row2=mysqli_fetch_assoc($query2);
+      if($row2==null)break;
+      $idc[$nc]=$row2["id"];
+      $duration[$row2["id"]]=$row2["duration"];
+      $nc++;
+    }
+    mysqli_free_result($query2);
+  }
+  if(in_array($row["id"],$idc))continue;
   $idc[$nc]=$row["id"];
   $duration[$row["id"]]=$row["duration"];
-  $auxused=$row["used"];
-  if($nc==0)$lastused=$auxused;
-  elseif($lastused<>$auxused){
-    myshuffle($idc,$fromsh,$nc-1);
-    $fromsh=$nc;
-    $lastused=$auxused;
-  }
   $nc++;
 }
 mysqli_free_result($query);
 
+
+$tt=30000;
 mysqli_query($con,"delete from playlist where tt=$tt");
-$hitm2=100*$maxdurationm2/(86400*$ratio/($ratio+1));
-printf("ratio=%3.1f hitm2=%4.1f maxdurationm2=%6.1f\n",$ratio,$hitm2,$maxdurationm2);
-if($hitm2>100)$hitm2=100;
+
+
 $ic=$iq1=$iq2=0;
 $um1=$um2=$uc=0;
 $totalduration=0;
