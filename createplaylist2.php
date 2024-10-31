@@ -1,6 +1,11 @@
 <?php
+$ratio=2; // ratio among music and content time
+$limit_group_time=4000; // maximum duration for day in a single group
+$limit_group_element=5; // maximum number of elements for day in a single group
+$start_high=5.0*3600; // start high interest time
+$end_high=22.5*3600; // end high interest time
 include "local.php";
-$ratio=(float)$argv[1]; //final ratio among music time with respect to content time
+
 $tt=(int)(time()/86400)+1;
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p2="/home/ices/music/ogg04/";
@@ -23,24 +28,22 @@ foreach($avoid as $k => $v){
 $listout.=")"; $listin.=")";
 
 // music list with higher score and far used for score=2
-$query=mysqli_query($con,"select id,duration from track where score=2 and genre not in $listout order by last asc,id asc,score desc;);
+$query=mysqli_query($con,"select id from track where score=2 and genre not in $listout order by last asc,id asc,score desc;);
 $nm2=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idm[$nm2++]=$row["id"];
-  $duration[$row["id"]]=$row["duration"];
 }
 mysqli_free_result($query);
 
 // music list with higher score and far used for score=1
-$query=mysqli_query($con,"select id,duration from track where score=1 and genre not in $listout order by last asc,id asc,score desc;);
+$query=mysqli_query($con,"select id from track where score=1 and genre not in $listout order by last asc,id asc,score desc;);
 $nm1=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $idm[$nm1++]=$row["id"];
-  $duration[$row["id"]]=$row["duration"];
 }
 mysqli_free_result($query);
 
@@ -60,32 +63,55 @@ for(;;){
     if($lastmin<$lastmax)$lastlim=$lastmax;
     else $lastlim=$lastmax+1;
     $query2=mysqli_query($con,"select id,duration from track where score=2 and genre in $listin and gid='$gid' and last<$lastlim order by gsel asc");
+    $group_time=0.0;
+    $group_element=0;
     for(;;){
       $row2=mysqli_fetch_assoc($query2);
       if($row2==null)break;
       $idc[$nc++]=$row2["id"];
-      $duration[$row2["id"]]=$row2["duration"];
+      $group_element++;
+      $group_time+=$row2["duration"];
+      if($group_time>$limit_group_time || $group_element>$limit_group_element)break;
     }
     mysqli_free_result($query2);
   }
   if(in_array($row["id"],$idc))continue;
   $idc[$nc++]=$row["id"];
-  $duration[$row["id"]]=$row["duration"];
-  $nc++;
 }
 mysqli_free_result($query);
 
 
 $tt=30000;
 mysqli_query($con,"delete from playlist where tt=$tt");
+$mytype=1; // 1=content 0=music
+$ic=$im2=im1=0;
+$tot_time=$music_time=$content_time=0.0;
+for(;;){
+  if($mytype==1){
+    $selid=$idc[$ic++];
+    if($ic>=$nc)$ic=0;
+  }
+  else {
+    if($tot_time>$start_high && $tot_time<$end_time){
+      $selid=$id[$im2++];
+      if($im2>=$nm2)$im2=0;
+    }
+    else {
+      $selid=$id[$im1++];
+      if($im1>=$nm1)$im1=0;
+    }
+  }
+  $query=mysqli_query($con,"select duration,duration_extra,title,author from track where id='$selid'");
+  $row=mysqli_fetch_assoc($query);
+  mysqli_free_result($query);
+  $tot_time+=$row["duration"]+$row["duration_extra"];
+  if($mytype==1)$content_time+=$row["duration"];
+  else $music_time+=$row["duration"];
+  if($music_time>
 
 
-$ic=$iq1=$iq2=0;
-$um1=$um2=$uc=0;
-$totalduration=0;
-$el=0;
-for($z=1;;){
-  if($z){
+  
+  if($mytype){
     $auxid=$idc[$ic];
     if(++$ic>=$nc)$ic=0;
     $uc++;
