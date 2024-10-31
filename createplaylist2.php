@@ -85,7 +85,7 @@ $tt=30000;
 mysqli_query($con,"delete from playlist where tt=$tt");
 $mytype=1; // 1=content 0=music
 $position=0;
-$ic=$im2=im1=0;
+$ic=$im2=$im1=0;
 $tot_time=$music_time=$content_time=0.0;
 for(;;){
   if($mytype==1){
