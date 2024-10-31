@@ -104,13 +104,13 @@ for(;;){
       if($im1>=$nm1)$im1=0;
     }
   }
-  $query=mysqli_query($con,"select duration,duration_extra,title,author from track where id='$selid'");
+  $query=mysqli_query($con,"select duration,duration_extra,title,author,score from track where id='$selid'");
   $row=mysqli_fetch_assoc($query);
   mysqli_free_result($query);
   $tot_time+=$row["duration"]+$row["duration_extra"];
   if($mytype==1)$content_time+=$row["duration"];
   else $music_time+=$row["duration"];
-  printf("%d %s %f %f %f %s %s\n",$mytype,$selid,$row["duration"],$row["duration_extra"],$tot_time,$row["title"],$row["author"]);
+  printf("%d %s %d %f %f %f %s %s\n",$mytype,$selid,$row["score"],$row["duration"],$row["duration_extra"],$tot_time,$row["title"],$row["author"]);
   if($music_time/$content_time<$ratio)$mytype=0;
   else $mytype=1;
 
