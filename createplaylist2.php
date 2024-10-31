@@ -81,7 +81,7 @@ for(;;){
 }
 mysqli_free_result($query);
 
-$tt=30000;
+// create the playlist
 mysqli_query($con,"delete from playlist where tt=$tt");
 $mytype=1; // 1=content 0=music
 $position=0;
