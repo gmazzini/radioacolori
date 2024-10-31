@@ -110,6 +110,7 @@ for(;;){
   $tot_time+=$row["duration"]+$row["duration_extra"];
   if($mytype==1)$content_time+=$row["duration"];
   else $music_time+=$row["duration"];
+  printf("%d %s %f %f %f %s %s\n",$mytype,$selid,$row["duration"],$row["duration_extra"],$tot_time,$row["title"],$row["author"]);
   if($music_time/$content_time<$ratio)$mytype=0;
   else $mytype=1;
 
@@ -118,7 +119,6 @@ for(;;){
   mysqli_query($con,"update track set used=used+1,last=$tt where id='$selid'");
   fprintf($fp,"%s%s.ogg\n",$p2,$selid);
   fprintf($fp,"%s%s.ogg\n",$p3,$selid);
-  printf("%s %f %f %f %s %s\n",$selid,$row["duration"],$row["duration_extra"],$tot_time,$row["title"],$row["author"]);
 
   if($tot_time>87000)break;
 }
