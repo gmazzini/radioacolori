@@ -54,7 +54,6 @@ $nc=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  printf(">>>> %s\n",$row["id"]);
   if(((int)$row["gsel"])==1){
     $gid=$row["gid"];
     printf("select min(last),max(last) from track where gid='$gid'\n");
@@ -64,9 +63,7 @@ for(;;){
     $lastmax=(isset($row2[1]))?$row2[1]:0;
     if($lastmin<$lastmax)$lastlim=$lastmax;
     else $lastlim=$lastmax+1;
-    printf("@@@ %s %d %d %d\n",$gid,$lastmin,$lastmax,$lastlim);
     mysqli_free_result($query2);
-    printf("select id,duration from track where gid='$gid' and last<$lastlim order by gsel asc\n");
     $query2=mysqli_query($con,"select id,duration from track where gid='$gid' and last<$lastlim order by gsel asc");
     $group_time=0.0;
     $group_element=0;
@@ -80,14 +77,11 @@ for(;;){
       if($group_time>$limit_group_time || $group_element>$limit_group_element)break;
     }
     mysqli_free_result($query2);
-    printf("---------- %s\n",$gid);
     continue;
   }
   $idc[$nc++]=$row["id"];
 }
 mysqli_free_result($query);
-exit(1);
-
 
 $tt=30000;
 mysqli_query($con,"delete from playlist where tt=$tt");
