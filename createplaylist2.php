@@ -83,6 +83,7 @@ for(;;){
   $idc[$nc++]=$row["id"];
 }
 mysqli_free_result($query);
+exit(1);
 
 
 $tt=30000;
