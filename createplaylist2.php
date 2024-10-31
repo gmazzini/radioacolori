@@ -95,7 +95,7 @@ for(;;){
     if($ic>=$nc)$ic=0;
   }
   else {
-    if($tot_time>$start_high && $tot_time<$end_time){
+    if($tot_time>$start_high && $tot_time<$end_high){
       $selid=$idm2[$im2++];
       if($im2>=$nm2)$im2=0;
     }
