@@ -74,8 +74,10 @@ for(;;){
       if($group_time>$limit_group_time || $group_element>$limit_group_element)break;
     }
     mysqli_free_result($query2);
+    continue;
   }
-  if(in_array($row["id"],$idc))continue;
+  for($j=0;$j<$nc;$j++)if($idc[$j]==$row["id"])break;
+  if($j<$nc)continue;
   $idc[$nc++]=$row["id"];
 }
 mysqli_free_result($query);
