@@ -10,7 +10,7 @@ $tt=(int)(time()/86400)+1;
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $p2="/home/ices/music/ogg04/";
 $p3="/home/ices/music/ogg04v/";
-$fp=fopen("/home/ices/playlist2.txt","wt");
+$fp=fopen("/home/ices/playlist.txt","wt");
 
 // list of content (lintin) by admitted genre and no used content (listout)
 $listout="("; $listin="(";
