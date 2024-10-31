@@ -77,6 +77,7 @@ for(;;){
       if($group_time>$limit_group_time || $group_element>$limit_group_element)break;
     }
     mysqli_free_result($query2);
+    printf("----------\n");
     continue;
   }
   for($j=0;$j<$nc;$j++)if($idc[$j]==$row["id"])break;
