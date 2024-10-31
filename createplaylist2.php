@@ -59,7 +59,7 @@ for(;;){
     $gid=$row["gid"];
     printf("select min(last),max(last) from track where gid='$gid'\n");
     $query2=mysqli_query($con,"select min(last),max(last) from track where gid='$gid'");
-    $row2=mysqli_fetch_row($query);
+    $row2=mysqli_fetch_row($query2);
     $lastmin=(isset($row2[0]))?$row2[0]:0;
     $lastmax=(isset($row2[1]))?$row2[1]:0;
     if($lastmin<$lastmax)$lastlim=$lastmax;
