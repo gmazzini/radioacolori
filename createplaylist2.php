@@ -68,6 +68,8 @@ for(;;){
     for(;;){
       $row2=mysqli_fetch_assoc($query2);
       if($row2==null)break;
+      for($j=0;$j<$nc;$j++)if($idc[$j]==$row2["id"])break;
+      if($j<$nc)continue;
       $idc[$nc++]=$row2["id"];
       printf("-- %s\n",$row2["id"]);
       $group_element++;
