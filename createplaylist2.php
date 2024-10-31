@@ -33,7 +33,7 @@ $nm2=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm[$nm2++]=$row["id"];
+  $idm2[$nm2++]=$row["id"];
 }
 mysqli_free_result($query);
 
@@ -43,7 +43,7 @@ $nm1=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $idm[$nm1++]=$row["id"];
+  $idm1[$nm1++]=$row["id"];
 }
 mysqli_free_result($query);
 
@@ -96,11 +96,11 @@ for(;;){
   }
   else {
     if($tot_time>$start_high && $tot_time<$end_time){
-      $selid=$id[$im2++];
+      $selid=$idm2[$im2++];
       if($im2>=$nm2)$im2=0;
     }
     else {
-      $selid=$id[$im1++];
+      $selid=$idm1[$im1++];
       if($im1>=$nm1)$im1=0;
     }
   }
