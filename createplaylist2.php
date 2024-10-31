@@ -69,6 +69,7 @@ for(;;){
       $row2=mysqli_fetch_assoc($query2);
       if($row2==null)break;
       $idc[$nc++]=$row2["id"];
+      printf("-- %s\n",$row2["id"]);
       $group_element++;
       $group_time+=$row2["duration"];
       if($group_time>$limit_group_time || $group_element>$limit_group_element)break;
