@@ -72,7 +72,7 @@ for(;;){
       $idc[$nc++]=$row2["id"];
       $group_element++;
       $group_time+=$row2["duration"];
-      if($group_time>$limit_group_time || $group_element>$limit_group_element)break;
+      if($group_time>=$limit_group_time || $group_element>=$limit_group_element)break;
     }
     mysqli_free_result($query2);
     continue;
