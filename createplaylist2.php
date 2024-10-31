@@ -63,7 +63,7 @@ for(;;){
     $lastmax=(isset($row2[1]))?$row2[1]:0;
     if($lastmin<$lastmax)$lastlim=$lastmax;
     else $lastlim=$lastmax+1;
-    printf("@@@ %s %d %d %d\n",$gid,$row2[0],$row2[1],$lastmin);
+    printf("@@@ %s %d %d %d\n",$gid,$lastmin,$lastmax,$lastlim);
     mysqli_free_result($query2);
     printf("select id,duration from track where gid='$gid' and last<$lastlim order by gsel asc\n");
     $query2=mysqli_query($con,"select id,duration from track where gid='$gid' and last<$lastlim order by gsel asc");
