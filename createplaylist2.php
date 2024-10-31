@@ -64,6 +64,7 @@ for(;;){
     mysqli_free_result($query2);
     if($lastmin<$lastmax)$lastlim=$lastmax;
     else $lastlim=$lastmax+1;
+    printf("select id,duration from track where score=2 and genre in $listin and gid='$gid' and last<$lastlim order by gsel asc\n");
     $query2=mysqli_query($con,"select id,duration from track where score=2 and genre in $listin and gid='$gid' and last<$lastlim order by gsel asc");
     $group_time=0.0;
     $group_element=0;
