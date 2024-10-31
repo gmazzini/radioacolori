@@ -48,13 +48,13 @@ for(;;){
 mysqli_free_result($query);
 
 // content list with score=2 and far used with group processing
-$query=mysqli_query($con,"select id,duration,gid from track where score=2 and genre in $listin and (gid='' or gsel=1) order by last asc,id asc");
+$query=mysqli_query($con,"select id,duration,gsel,gid from track where score=2 and genre in $listin and (gsel=0 or gsel=1) order by last asc,id asc");
 $nc=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $gid=$row["gid"];
-  if(strlen($gid)==5){
+  if($row["gsel"]==1){
+    $gid=$row["gid"];
     $query2=mysqli_query($con,"select min(last),max(last) from track where score=2 and genre in $listin and gid='$gid'");
     $row2=mysqli_fetch_row($query);
     $lastmin=(isset($row[0]))?$row[0]:0;
