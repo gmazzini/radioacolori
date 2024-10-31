@@ -53,6 +53,7 @@ $nc=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
+  printf(">>>> %s\n",$row["id"]);
   if(((int)$row["gsel"])==1){
     $gid=$row["gid"];
     $query2=mysqli_query($con,"select min(last),max(last) from track where score=2 and genre in $listin and gid='$gid'");
