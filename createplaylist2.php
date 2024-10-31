@@ -84,6 +84,7 @@ mysqli_free_result($query);
 $tt=30000;
 mysqli_query($con,"delete from playlist where tt=$tt");
 $mytype=1; // 1=content 0=music
+$position=0;
 $ic=$im2=im1=0;
 $tot_time=$music_time=$content_time=0.0;
 for(;;){
@@ -107,42 +108,19 @@ for(;;){
   $tot_time+=$row["duration"]+$row["duration_extra"];
   if($mytype==1)$content_time+=$row["duration"];
   else $music_time+=$row["duration"];
-  if($music_time>
+  if($music_time/$content_time<$ratio)$mytype=0;
+  else $mytype=1;
 
+  mysqli_query($con,"insert into playlist (tt,id,position) values ($tt,'$selid',$position)");
+  $position++;
+  mysqli_query($con,"update track set used=used+1,last=$tt where id='$selid'");
+  fprintf($fp,"%s%s.ogg\n",$p2,$selid);
+  fprintf($fp,"%s%s.ogg\n",$p3,$selid);
+  printf("%s %f %f %f %s %s\n",$selid,$row["duration"],$row["duration_extra"],$tot_time,$row["title"],$row["author"]);
 
-  
-  if($mytype){
-    $auxid=$idc[$ic];
-    if(++$ic>=$nc)$ic=0;
-    $uc++;
-    $lastdurationcontent=$duration[$auxid];
-    $lastdurationmusic=0;
-    $z=0;
-  }
-  else {
-    if(rand(0,100)<=$hitm2){
-      $auxid=$idm2[$iq2];
-      if(++$iq2>=$nm2)$iq2=0;
-      $um2++;
-    }
-    else {
-      $auxid=$idm1[$iq1];
-      if(++$iq1>=$nm1)$iq1=0;
-      $um1++;
-    }
-    $lastdurationmusic+=$duration[$auxid];
-    if($lastdurationmusic>$lastdurationcontent*$ratio)$z=1;
-  }
-  mysqli_query($con,"insert into playlist (tt,id,position) values ($tt,'$auxid',$el)");
-  mysqli_query($con,"update track set used=used+1,last=$tt where id='$auxid'");
-  $el++;
-  fprintf($fp,"%s%s.ogg\n",$p2,$auxid);
-  fprintf($fp,"%s%s.ogg\n",$p3,$auxid);
-  $totalduration+=$duration[$auxid];
-  if($totalduration>86400)break;
+  if($tot_time>87000)break;
 }
 mysqli_close($con);
 fclose($fp);
-printf("totduration=%6.1f nm2=%d,um2=%d nm1=%d,um1=%d nc=%d,uc=%d\n",$totalduration,$nm2,$um2,$nm1,$um1,$nc,$uc);
 
 ?>
