@@ -48,7 +48,7 @@ for(;;){
 mysqli_free_result($query);
 
 // content list with score=2 and far used with group processing
-$query=mysqli_query($con,"select id,duration,gid from track where score=2 and genre in $listin order by last asc,id asc");
+$query=mysqli_query($con,"select id,duration,gid from track where score=2 and genre in $listin and (gid=='' or gsel=1) order by last asc,id asc");
 $nc=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
@@ -68,8 +68,6 @@ for(;;){
     for(;;){
       $row2=mysqli_fetch_assoc($query2);
       if($row2==null)break;
-      for($j=0;$j<$nc;$j++)if($idc[$j]==$row2["id"])break;
-      if($j<$nc)continue;
       $idc[$nc++]=$row2["id"];
       printf("-- %s\n",$row2["id"]);
       $group_element++;
@@ -80,8 +78,6 @@ for(;;){
     printf("----------\n");
     continue;
   }
-  for($j=0;$j<$nc;$j++)if($idc[$j]==$row["id"])break;
-  if($j<$nc)continue;
   $idc[$nc++]=$row["id"];
 }
 mysqli_free_result($query);
