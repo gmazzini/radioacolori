@@ -59,8 +59,8 @@ for(;;){
     $gid=$row["gid"];
     $query2=mysqli_query($con,"select min(last),max(last) from track where score=2 and genre in $listin and gid='$gid'");
     $row2=mysqli_fetch_row($query);
-    $lastmin=(isset($row[0]))?$row[0]:0;
-    $lastmax=(isset($row[1]))?$row[1]:0;
+    $lastmin=(isset($row2[0]))?$row2[0]:0;
+    $lastmax=(isset($row2[1]))?$row2[1]:0;
     mysqli_free_result($query2);
     if($lastmin<$lastmax)$lastlim=$lastmax;
     else $lastlim=$lastmax+1;
