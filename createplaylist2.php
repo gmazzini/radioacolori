@@ -57,6 +57,7 @@ for(;;){
   printf(">>>> %s\n",$row["id"]);
   if(((int)$row["gsel"])==1){
     $gid=$row["gid"];
+    printf("select min(last),max(last) from track where gid='$gid'\n");
     $query2=mysqli_query($con,"select min(last),max(last) from track where gid='$gid'");
     $row2=mysqli_fetch_row($query);
     $lastmin=(isset($row2[0]))?$row2[0]:0;
