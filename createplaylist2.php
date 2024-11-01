@@ -1,9 +1,4 @@
 <?php
-$ratio=2; // ratio among music and content time
-$limit_group_time=4000; // maximum duration for day in a single group
-$limit_group_element=5; // maximum number of elements for day in a single group
-$start_high=5.0*3600; // start high interest time
-$end_high=22.5*3600; // end high interest time
 include "local.php";
 
 $tt=(int)(time()/86400)+1;
@@ -56,14 +51,11 @@ for(;;){
   if($row==null)break;
   if(((int)$row["gsel"])==1){
     $gid=$row["gid"];
-    $query2=mysqli_query($con,"select min(last),max(last) from track where gid='$gid'");
+    $query2=mysqli_query($con,"select min(last) from track where gid='$gid'");
     $row2=mysqli_fetch_row($query2);
     $lastmin=(isset($row2[0]))?$row2[0]:0;
-    $lastmax=(isset($row2[1]))?$row2[1]:0;
-    if($lastmin<$lastmax)$lastlim=$lastmax;
-    else $lastlim=$lastmax+1;
     mysqli_free_result($query2);
-    $query2=mysqli_query($con,"select id,duration from track where gid='$gid' and last<$lastlim order by gsel asc");
+    $query2=mysqli_query($con,"select id,duration from track where gid='$gid' and last=$lastmin order by gsel asc");
     $group_time=0.0;
     $group_element=0;
     for(;;){
