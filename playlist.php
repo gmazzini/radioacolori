@@ -26,7 +26,7 @@ for($zz=count($ll)-1;$zz>0;$zz--){
 echo "<pre>";
 $vv=86400-58;;
 for($j=0;$j<$i;$j++){
-  $query=mysqli_query($con,"select title,author,genre,duration,duration_extra,used,score from track where id='$id[$j]'");
+  $query=mysqli_query($con,"select title,author,genre,duration,duration_extra,used,score,gid,gsel from track where id='$id[$j]'");
   $row=mysqli_fetch_assoc($query);
   $zz=in_array($row["genre"],$special);
   if($zz)echo "<font color='blue'>";
@@ -36,12 +36,14 @@ for($j=0;$j<$i;$j++){
   if(isset($logtime[$id[$j].$usemul[$id[$j]]]))echo " | ".date("H:i:s",$logtime[$id[$j].$usemul[$id[$j]]]);
   else echo " |         ";
   echo " | ".$id[$j];
-  echo " | ".mystr($row["title"],40);
+  echo " | ".mystr($row["title"],60);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
   echo " | ".mystr2((int)$row["duration"],4)."s";
   echo " | ".mystr2($row["used"],3);
   echo " | ".mystr2($row["score"],1);
+  echo " | ".mystr2($row["gid"],5);
+  echo " | ".mystr2((int)$row["gsel"],3);
   if($zz)echo "</font>";
   echo "\n";
   $vv+=round($row["duration"]-$corr,2)+round($row["duration_extra"]-$corr,2);
