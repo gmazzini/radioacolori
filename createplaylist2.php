@@ -43,7 +43,6 @@ for(;;){
 mysqli_free_result($query);
 
 // content list with score=2 and far used with group processing
-printf("select id,duration,gsel,gid from track where score=2 and genre in $listin and (gsel=0 or gsel=1) order by last asc,id asc\n");
 $query=mysqli_query($con,"select id,duration,gsel,gid from track where score=2 and genre in $listin and (gsel=0 or gsel=1) order by last asc,id asc");
 $nc=0;
 for(;;){
