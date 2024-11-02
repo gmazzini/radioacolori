@@ -23,7 +23,7 @@ foreach($avoid as $k => $v){
 $listout.=")"; $listin.=")";
 
 // music list with higher score and far used for score=2
-$query=mysqli_query($con,"select id from track where score=2 and genre not in $listout order by last asc,id asc");
+$query=mysqli_query($con,"select id from track where score=2 and genre not in $listout order by last asc,rand()");
 $nm2=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
@@ -33,7 +33,7 @@ for(;;){
 mysqli_free_result($query);
 
 // music list with higher score and far used for score=1
-$query=mysqli_query($con,"select id from track where score=1 and genre not in $listout order by last asc,id asc");
+$query=mysqli_query($con,"select id from track where score=1 and genre not in $listout order by last asc,rand()");
 $nm1=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
@@ -43,7 +43,7 @@ for(;;){
 mysqli_free_result($query);
 
 // content list with score=2 and far used with group processing
-$query=mysqli_query($con,"select id,duration,gsel,gid from track where score=2 and genre in $listin and (gsel=0 or gsel=1) order by last asc,id asc");
+$query=mysqli_query($con,"select id,duration,gsel,gid from track where score=2 and genre in $listin and (gsel=0 or gsel=1) order by last asc,rand()");
 $nc=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
