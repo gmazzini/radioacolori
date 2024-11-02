@@ -23,7 +23,7 @@ foreach($avoid as $k => $v){
 $listout.=")"; $listin.=")";
 
 // music list with higher score and far used for score=2
-$query=mysqli_query($con,"select id from track where score=2 and genre not in $listout order by last asc,id asc,score desc");
+$query=mysqli_query($con,"select id from track where score=2 and genre not in $listout order by last asc,id asc");
 $nm2=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
@@ -33,7 +33,7 @@ for(;;){
 mysqli_free_result($query);
 
 // music list with higher score and far used for score=1
-$query=mysqli_query($con,"select id from track where score=1 and genre not in $listout order by last asc,id asc,score desc");
+$query=mysqli_query($con,"select id from track where score=1 and genre not in $listout order by last asc,id asc");
 $nm1=0;
 for(;;){
   $row=mysqli_fetch_assoc($query);
