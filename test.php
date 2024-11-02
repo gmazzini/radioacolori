@@ -31,10 +31,12 @@ for(;;){
   $num_min=$row2[0];
   $gsel_min=$row2[1];
   mysqli_free_result($query2);
+  printf("%s %d %d %d %d\n",$gid,$last_min,$gsel_max,$num_min,$gsel_min);
   if($num_min<$limit_group_element){
     for($j=0;$j<$limit_group_element-$num_min);$j++){
       $q=$gsel_min+$j;
       if($q>=$gsel_max)$q=1+($q % $gsel_max);
+      printf("update track set last=$last_min where gid='$gid' and gsel=$q\n");
       // mysqli_query($con,"update track set last=$last_min where gid='$gid' and gsel=$q");
     }
   }
