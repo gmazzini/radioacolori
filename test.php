@@ -26,7 +26,7 @@ for(;;){
   $query2=mysqli_query($con,"select min(last),max(gsel) from track where gid='$gid'");
   $row2=mysqli_fetch_row($query2);
   $last_min=$row2[0];
-  $gsel_max=$row2[0];
+  $gsel_max=$row2[1];
   mysqli_free_result($query2);
   $query2=mysqli_query($con,"select count(*),min(gsel) from track where gid='$gid' and last=$last_min");
   $row2=mysqli_fetch_row($query2);
