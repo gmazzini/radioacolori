@@ -1,5 +1,7 @@
 <?php
 include "local.php";
+
+$con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 // list of content (lintin) by admitted genre and no used content (listout)
 $listout="("; $listin="(";
 $co=0;
@@ -43,3 +45,7 @@ for(;;){
   
 }
 mysqli_free_result($query);
+
+
+mysqli_close($con);
+?>
