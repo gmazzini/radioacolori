@@ -35,9 +35,9 @@ for(;;){
   mysqli_free_result($query2);
   printf("gid=%s last_min=%d gsel_max=%d num_min=%d gsel_min=%d\n",$gid,$last_min,$gsel_max,$num_min,$gsel_min);
   if($num_min<$limit_group_element){
-    for($j=0;$j<$limit_group_element-$num_min;$j++){
+    for($j=1;$j<=$limit_group_element-$num_min;$j++){
       $q=$gsel_min+$num_min+$j;
-      if($q>=$gsel_max)$q=1+($q % $gsel_max);
+      if($q>=$gsel_max)$q=1+(($q-1) % $gsel_max);
       printf("update track set last=$last_min where gid='$gid' and gsel=$q\n");
       // mysqli_query($con,"update track set last=$last_min where gid='$gid' and gsel=$q");
     }
