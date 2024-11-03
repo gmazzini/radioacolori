@@ -111,6 +111,33 @@ for(;;){
 
   if($tot_time>87000)break;
 }
+
+// normalize content last
+$query=mysqli_query($con,"select gid from track where score=2 and genre in $listin and gsel=1");
+for(;;){
+  $row=mysqli_fetch_assoc($query);
+  if($row==null)break;
+  $gid=$row["gid"];
+  $query2=mysqli_query($con,"select min(last),max(gsel) from track where gid='$gid'");
+  $row2=mysqli_fetch_row($query2);
+  $last_min=$row2[0];
+  $gsel_max=$row2[1];
+  mysqli_free_result($query2);
+  $query2=mysqli_query($con,"select count(*),min(gsel) from track where gid='$gid' and last=$last_min");
+  $row2=mysqli_fetch_row($query2);
+  $num_min=$row2[0];
+  $gsel_min=$row2[1];
+  mysqli_free_result($query2);
+  printf("gid=%s last_min=%d gsel_max=%d num_min=%d gsel_min=%d\n",$gid,$last_min,$gsel_max,$num_min,$gsel_min);
+  if($num_min<$limit_group_element){
+    for($j=0;$j<$limit_group_element-$num_min;$j++){
+      $q=$gsel_min+$num_min+$j;
+      if($q>=$gsel_max)$q=1+(($q-1) % $gsel_max);
+      mysqli_query($con,"update track set last=$last_min where gid='$gid' and gsel=$q");
+    }
+  }
+}
+
 mysqli_close($con);
 fclose($fp);
 
