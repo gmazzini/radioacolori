@@ -39,7 +39,7 @@ for(;;){
       $q=$gsel_min+$num_min+$j;
       if($q>=$gsel_max)$q=1+(($q-1) % $gsel_max);
       printf("update track set last=$last_min where gid='$gid' and gsel=$q\n");
-      // mysqli_query($con,"update track set last=$last_min where gid='$gid' and gsel=$q");
+      mysqli_query($con,"update track set last=$last_min where gid='$gid' and gsel=$q");
     }
   }
   
