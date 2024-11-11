@@ -63,7 +63,6 @@ for(;;){
         if($group_time>=$limit_group_time || $group_element>=$limit_group_element)break;
       }
     }
-
     continue;
   }
   $idc[$nc++]=$row["id"];
