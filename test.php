@@ -32,7 +32,7 @@ for(;;){
     for(;;){
       $row2=mysqli_fetch_assoc($query2);
       $aux[$llcd]["id"]=$row2["id"].",$gid,".$row2["gsel"].",".$row2["duration"];
-      $aux[$llcd]["duration"]=$row2["duration"];
+      @$aux[$llcd]["duration"]=$row2["duration"];
       $aux[$llcd++]["gsel"]=$row2["gsel"];
       if($row2==null)break;
     }
