@@ -40,14 +40,14 @@ for(;;){
     $group_time=0.0;
     $group_element=0;
     if($x<$llcd){
-      for($y=x;$y<$llcd;y++){
+      for($y=x;$y<$llcd;$y++){
         $idc[$nc++]=$aux[$y]["id"];
         $group_element++;
         $group_time+=$aux[$y]["duration"];
         if($group_time>=$limit_group_time || $group_element>=$limit_group_element)break;
       }
       if($y==$llcd){
-        for($y=0;$y<$x;y++){
+        for($y=0;$y<$x;$y++){
           $idc[$nc++]=$aux[$y]["id"];
           $group_element++;
           $group_time+=$aux[$y]["duration"];
@@ -56,7 +56,7 @@ for(;;){
       }
     }
     else {
-      for($y=0;$y<$llcd;y++){
+      for($y=0;$y<$llcd;$y++){
         $idc[$nc++]=$aux[$y]["id"];
         $group_element++;
         $group_time+=$aux[$y]["duration"];
