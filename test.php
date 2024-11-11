@@ -30,6 +30,7 @@ for(;;){
     $query2=mysqli_query($con,"select id,duration,gsel from track where gid='$gid' order by last asc,gsel asc");
     for(;;){
       $row2=mysqli_fetch_assoc($query2);
+      print_r($row2);
       $aux[$llcd]["id"]=$row2["id"].",$gid,".$row2["gsel"].",".$row2["duration"];
       $aux[$llcd]["duration"]=$row2["duration"];
       $aux[$llcd++]["gsel"]=$row2["gsel"];
