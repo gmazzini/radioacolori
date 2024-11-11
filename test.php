@@ -69,6 +69,8 @@ for(;;){
 }
 mysqli_free_result($query);
 
+print_r($idc);
+
 
 mysqli_close($con);
 fclose($fp);
