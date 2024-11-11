@@ -36,7 +36,7 @@ for(;;){
       if($row2==null)break;
     }
     mysqli_free_result($query2);
-    for($x=1;$x<$llcd;x++)if($aux[$x]["gsel"]==$aux[$x-1]["gsel"]+1)continue;
+    for($x=1;$x<$llcd;$x++)if($aux[$x]["gsel"]==$aux[$x-1]["gsel"]+1)continue;
     $group_time=0.0;
     $group_element=0;
     if($x<$llcd){
