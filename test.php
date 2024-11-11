@@ -73,5 +73,4 @@ print_r($idc);
 
 
 mysqli_close($con);
-fclose($fp);
 ?>
