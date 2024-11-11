@@ -27,6 +27,7 @@ for(;;){
   if(((int)$row["gsel"])==1){
     $gid=$row["gid"];
     $llcd=0;
+    $aux=array();
     $query2=mysqli_query($con,"select id,duration,gsel from track where gid='$gid' order by last asc,gsel asc");
     for(;;){
       $row2=mysqli_fetch_assoc($query2);
