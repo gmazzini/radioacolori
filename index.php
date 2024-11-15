@@ -23,6 +23,32 @@ echo "  if(y<=0){location.reload();}\n";
 echo "},1000);\n";
 echo "</script>\n";
 
+?>
+Benvenuti alla Caccia al Tesoro di Radio a Colori, 
+organizzata dall’Associazione di Promozione Sociale "I Colori del Navile" 
+per il Festival della Cultura Tecnica! Quest'anno, in occasione dei 150 anni 
+alla nascita di Guglielmo Marconi, celebreremo la radio – l’invenzione del 
+celebre scienziato bolognese – attraverso un’avventura radiofonica.
+
+La caccia consiste nel trovare 5 codici numerici di 3 cifre, nascosti in 5 
+diverse località coperte dal segnale di Radio a Colori. Sabato 16 novembre 2024, 
+su Radio a Colori verranno trasmessi ripetutamente e per tutta la giornata questo 
+messaggio introduttivo e 5 indizi che vi  guideranno verso i codici. Gli indizi 
+possono essere seguiti in qualsiasi ordine.
+
+Radio a Colori trasmette in AM alla frequenza di 1602 KHz, con buona copertura 
+nella zona nord del quartiere Navile, a Granarolo, Castel Maggiore e in 
+vari punti aperti della pianura circostante. Per partecipare, è sufficiente un ricevitore AM, 
+come quelli comunemente presenti nelle auto.
+
+Una volta raccolti i codici, inviateli all’organizzazione via email all’indirizzo 
+colori.navile@gmail.com. Tutti i partecipanti che troveranno i 5 codici riceveranno una 
+cartolina commemorativa di Guglielmo Marconi. Non verranno raccolti o conservati 
+dati personali: la vostra email sarà utilizzata solo per l'invio della risposta. 
+Vi preghiamo di non includere dati personali, non necessari né utilizzati.
+<?php
+
+
 echo "<pre><table>";
 echo "<td><img src='logo.jpg' width='10%' height='auto'><br>";
 echo "<a href='http://radioacolori.net:8000/stream' target='_blank'>webradio</a></td>";
