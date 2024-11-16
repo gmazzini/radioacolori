@@ -85,7 +85,6 @@ echo "Identificativo: ".$id."\n\n";
 
 echo "<font color='blue'>Palinsesto\n</font>";
 $vv=0;
-$vvr=date("h")*3600+date("i")*60+date("s");
 $query=mysqli_query($con,"select p.id,t.duration,t.duration_extra from playlist p,track t where p.id=t.id and tt=$tt order by position");
 for($ts=0;;$ts++){
   $row=mysqli_fetch_assoc($query);
@@ -102,7 +101,7 @@ for($i=0;$i<=10;$i++){
   $query=mysqli_query($con,"select title,author,genre,duration from track where id='$seq[$i]'");
   $row=mysqli_fetch_assoc($query);
   if($i==$pp)echo "<font color='red'>";
-  echo date("H:i:s",$sched[$ts])." | ".$seq[$i];
+  echo date("H:i:s",$sched[$i])." | ".$seq[$i];
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
