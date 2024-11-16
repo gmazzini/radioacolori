@@ -88,10 +88,10 @@ $query=mysqli_query($con,"select p.id,t.duration,t.duration_extra from playlist 
 for($ts=0;;$ts++){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
-  $vv+=round($row["duration"]-$corr,2)+round($row["duration_extra"]-$corr,2);
   $seq[$ts]=$row["id"];
   $sched[$ts]=$vv;
   if($vv>$xx-10 && $vv<$xx+10)$pp=$ts;
+  $vv+=round($row["duration"]-$corr,2)+round($row["duration_extra"]-$corr,2);
 }
 mysqli_free_result($query);
 $f=$pp-4; if($f<0)$f=0;
