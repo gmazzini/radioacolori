@@ -86,7 +86,7 @@ for($ts=0;;$ts++){
   if($row==null)break;
   $seq[$ts]=$row["id"];
   $vv=$vv+$row["duration"]+$row["duration_extra"];
-  if($seq[$ts]==$id && $vv>$vvr-60 && $vv<$vvr+60)$pp=$ts;
+  if($seq[$ts]==$id)$pp=$ts;
 }
 mysqli_free_result($query);
 $f=$pp-4; if($f<0)$f=0;
