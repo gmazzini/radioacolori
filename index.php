@@ -89,7 +89,7 @@ for($ts=0;;$ts++){
   $row1=mysqli_fetch_assoc($query1);
   $vv=$vv+$row["duration"]-$row["duration_extra"];
   mysqli_free_result($query1);
-  if($seq[$ts]==$id && $vv>$vvr-60 && $vv<$vvr+60)$pp=$ts;
+  if($seq[$ts]==$id && $vv>$vvr-120 && $vv<$vvr+120)$pp=$ts;
 }
 mysqli_free_result($query);
 $f=$pp-4; if($f<0)$f=0;
