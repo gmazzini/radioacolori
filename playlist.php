@@ -40,7 +40,7 @@ for($j=0;$j<$i;$j++){
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
   echo " | ".mystr2((int)$row["duration"],4)."s";
-  echo " | ".mystr2($row["used"],3);
+  echo " | ".mystr2($row["used"],4);
   echo " | ".mystr2($row["score"],1);
   echo " | ".mystr2($row["gid"],5);
   echo " | ".mystr2((int)$row["gsel"],3);
