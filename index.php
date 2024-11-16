@@ -97,7 +97,7 @@ mysqli_free_result($query);
 $f=$pp-4; if($f<0)$f=0;
 $t=$pp+4; if($t>=$ts)$t=$ts-1;
 
-for($i=f;$i<=t;$i++){
+for($i=$f;$i<=$t;$i++){
   $query=mysqli_query($con,"select title,author,genre,duration from track where id='$seq[$i]'");
   $row=mysqli_fetch_assoc($query);
   if($i==$pp)echo "<font color='red'>";
