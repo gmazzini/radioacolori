@@ -91,12 +91,13 @@ for($ts=0;;$ts++){
   $vv+=round($row["duration"]-$corr,2)+round($row["duration_extra"]-$corr,2);
   $seq[$ts]=$row["id"];
   $sched[$ts]=$vv;
+  if($vv>$xx-10 && $vv<$xx+10)$pp=$ts;
 }
 mysqli_free_result($query);
 $f=$pp-4; if($f<0)$f=0;
 $t=$pp+4; if($t>=$ts)$t=$ts-1;
 
-for($i=0;$i<=10;$i++){
+for($i=f;$i<=t;$i++){
   $query=mysqli_query($con,"select title,author,genre,duration from track where id='$seq[$i]'");
   $row=mysqli_fetch_assoc($query);
   if($i==$pp)echo "<font color='red'>";
