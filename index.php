@@ -96,9 +96,6 @@ for($ts=0;;$ts++){
 mysqli_free_result($query);
 $f=$pp-4; if($f<0)$f=0;
 $t=$pp+4; if($t>=$ts)$t=$ts-1;
-
-$f=0;
-
 for($i=$f;$i<=$t;$i++){
   $query=mysqli_query($con,"select title,author,genre,duration from track where id='$seq[$i]'");
   $row=mysqli_fetch_assoc($query);
