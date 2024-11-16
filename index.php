@@ -79,13 +79,16 @@ echo "Identificativo: ".$id."\n\n";
 
 echo "<font color='blue'>Palinsesto\n</font>";
 $vv=0;
-// $vvr=date("h")*3600+date("i")*60+date("s");
-$query=mysqli_query($con,"select id,duration,duration_extra from playlist where tt=$tt order by position");
+$vvr=date("h")*3600+date("i")*60+date("s");
+$query=mysqli_query($con,"select id from playlist where tt=$tt order by position");
 for($ts=0;;$ts++){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
   $seq[$ts]=$row["id"];
-  $vv=$vv+$row["duration"]+$row["duration_extra"];
+  $query1=mysqli_query($con,"select duration,duration_extra from track where id='$seq[$ts]'");
+  $row1=mysqli_fetch_assoc($query1);
+  $vv=$vv+$row["duration"]-$row["duration_extra"];
+  mysqli_free_result($query1);
   if($seq[$ts]==$id)$pp=$ts;
 }
 mysqli_free_result($query);
