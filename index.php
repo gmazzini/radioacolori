@@ -83,7 +83,7 @@ echo "Identificativo: ".$id."\n\n";
 
 
 echo "<font color='blue'>Palinsesto\n</font>";
-$vv=86400-58;
+$vv=((int)(time()/86400))*86400-58;
 $query=mysqli_query($con,"select p.id,t.duration,t.duration_extra from playlist p,track t where p.id=t.id and tt=$tt order by position");
 for($ts=0;;$ts++){
   $row=mysqli_fetch_assoc($query);
