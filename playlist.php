@@ -31,7 +31,7 @@ for(;$zz<count($ll);$zz++){
 }
 
 echo "<pre>";
-$vv=86400-58;;
+$vv=86400-58;
 for($j=0;$j<$i;$j++){
   $query=mysqli_query($con,"select title,author,genre,duration,duration_extra,used,score,gid,gsel from track where id='$id[$j]'");
   $row=mysqli_fetch_assoc($query);
