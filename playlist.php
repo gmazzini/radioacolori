@@ -58,6 +58,6 @@ function mystr($a,$l){
 }
 function mystr2($a,$l){
   $la=mb_strlen($a);
-  return $a.str_repeat(" ",$l-$la);
+  return $a.str_repeat(" ",($l>$la)?$l-$la:0);
 }
 ?>
