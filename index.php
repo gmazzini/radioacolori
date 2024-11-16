@@ -77,41 +77,37 @@ echo "Durata: ".(int)$row["duration"]."s\n</font>";
 echo "Inizio: ".date("Y-m-d H:i:s",$xx)."\n";
 echo "Identificativo: ".$id."\n\n";
 
+
+
+
+
+
+
 echo "<font color='blue'>Palinsesto\n</font>";
 $vv=0;
 $vvr=date("h")*3600+date("i")*60+date("s");
-$query=mysqli_query($con,"select id from playlist where tt=$tt order by position");
+$query=mysqli_query($con,"select p.id,t.duration,t.duration_extra from playlist p,track t where p.id=t.id and tt=$tt order by position");
 for($ts=0;;$ts++){
   $row=mysqli_fetch_assoc($query);
   if($row==null)break;
+  $vv+=round($row["duration"]-$corr,2)+round($row["duration_extra"]-$corr,2);
   $seq[$ts]=$row["id"];
-  $query1=mysqli_query($con,"select duration,duration_extra from track where id='$seq[$ts]'");
-  $row1=mysqli_fetch_assoc($query1);
-  $vv=$vv+$row["duration"]-$row["duration_extra"];
-  mysqli_free_result($query1);
-  if($seq[$ts]==$id && $vv>$vvr-120 && $vv<$vvr+120)$pp=$ts;
+  $sched[$ts]=$vv;
 }
 mysqli_free_result($query);
 $f=$pp-4; if($f<0)$f=0;
 $t=$pp+4; if($t>=$ts)$t=$ts-1;
-$vv=$xx;
-for($i=$f;$i<$pp;$i++){
-  $query=mysqli_query($con,"select duration,duration_extra from track where id='$seq[$i]'");
-  $row=mysqli_fetch_assoc($query);
-  $vv=$vv-$row["duration"]-$row["duration_extra"];
-  mysqli_free_result($query);
-}
-for($i=$f;$i<=$t;$i++){
-  $query=mysqli_query($con,"select title,author,genre,duration,duration_extra from track where id='$seq[$i]'");
+
+for($i=0;$i<=10;$i++){
+  $query=mysqli_query($con,"select title,author,genre,duration from track where id='$seq[$i]'");
   $row=mysqli_fetch_assoc($query);
   if($i==$pp)echo "<font color='red'>";
-  echo date("H:i:s",$vv)." | ".$seq[$i];
+  echo date("H:i:s",$sched[$ts])." | ".$seq[$i];
   echo " | ".mystr($row["title"],40);
   echo " | ".mystr($row["author"],30);
   echo " | ".mystr($row["genre"],20);
   echo " | ".(int)$row["duration"]."s\n";
   if($i==$pp)echo "</font>";
-  $vv=$vv+$row["duration"]+$row["duration_extra"];
   mysqli_free_result($query);
 }
 echo "Prossimo brano tra: <div style='display: inline' id='cdw'></div>s\n\n";
