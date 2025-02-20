@@ -7,7 +7,7 @@ $ll=file("/var/log/ices/ices.log");
 for($i=count($ll)-1;$i>0;$i--)
   if(strpos($ll[$i],"Currently playing \"/home/ices/music/ogg04/")!==false)
     break;
-$id=current(explode(".",end(explode("/",$ll[$i]))));
+@$id=current(explode(".",end(explode("/",$ll[$i]))));
 $xx=strtotime(substr($ll[$i],1,20));
 
 $query=mysqli_query($con,"select title,author,genre,duration,duration_extra from track where id='$id'");
