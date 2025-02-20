@@ -28,7 +28,7 @@ echo "<pre><table>";
 echo "<td><img src='logo.jpg' width='10%' height='auto'><br>";
 echo "<a href='http://radioacolori.net:8000/stream' target='_blank'>webradio</a></td>";
 echo "<td><pre><form method='post'><input type='text' name='myid'><input type='submit' value='Cerca'></form>";
-$ids=$_POST["myid"];
+@$ids=$_POST["myid"];
 $query1=mysqli_query($con,"select title,author,genre,duration from track where id='$ids'");
 $row1=mysqli_fetch_assoc($query1);
 mysqli_free_result($query1);
