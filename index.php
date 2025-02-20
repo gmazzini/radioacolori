@@ -32,7 +32,7 @@ echo "<td><pre><form method='post'><input type='text' name='myid'><input type='s
 $query1=mysqli_query($con,"select title,author,genre,duration from track where id='$ids'");
 $row1=mysqli_fetch_assoc($query1);
 mysqli_free_result($query1);
-if(@$row1["title"]!=null){
+@if($row1["title"]!=null){
   echo "Titolo: ".$row1["title"]."\n";
   echo "Autore: ".$row1["author"]."\n";
   echo "Genere: ".$row1["genre"]."\n";
