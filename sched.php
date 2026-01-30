@@ -2,12 +2,10 @@
 include "local.php";
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit;
-
 $now = time();
 $start_of_day = strtotime("today 00:00:00");
 $elapsed_needed = $now - $start_of_day;
 $tt = (int)(time() / 86400); 
-
 $p2 = "/home/ices/music/ogg04/";
 $p3 = "/home/ices/music/ogg04v/";
 
