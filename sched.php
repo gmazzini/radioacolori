@@ -4,14 +4,19 @@ include "local.php";
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit;
 
-$now = time();
-$start_of_day = strtotime("today 00:00:00");
-$elapsed_needed = $now - $start_of_day;
+// float time (coerente con durate float)
+$now = microtime(true);
+$start_of_day = strtotime("today 00:00:00"); // int
+$elapsed_needed = $now - $start_of_day;      // float
+
+// tolleranza anti “ballo” float (1 ms)
+$eps = 0.001;
+
 $tt = (int) floor($start_of_day / 86400);
 
 $p2   = "/home/ices/music/ogg04/";
 $p3   = "/home/ices/music/ogg04v/";
-$glue = "/home/ices/music/glue.ogg"; // "disperazione" (path completo)
+$glue = "/home/ices/music/glue.ogg";
 
 $query = "SELECT p.id, t.duration, t.duration_extra, t.title, t.author
           FROM playlist p
@@ -26,7 +31,20 @@ if (!$res) {
     exit;
 }
 
-$current_cumulative = 0;
+$current_cumulative = 0.0;
+
+/**
+ * Normalizza float come stringa per cue_in:
+ * max 3 decimali, punto, senza zeri finali.
+ */
+function fmt_float_for_liq($v) {
+    $v = (float)$v;
+    if ($v < 0) $v = 0.0;
+    $s = sprintf('%.3f', $v);
+    $s = rtrim(rtrim($s, '0'), '.');
+    if ($s === '') $s = '0';
+    return $s;
+}
 
 while ($row = mysqli_fetch_assoc($res)) {
     $id_num = (int)$row['id'];
@@ -34,26 +52,36 @@ while ($row = mysqli_fetch_assoc($res)) {
 
     $d_music = (float)$row['duration'];
     $d_close = (float)$row['duration_extra'];
-    $title  = addslashes($row['title']);
-    $artist = addslashes($row['author']);
 
-    // segmento MUSICA
-    if ($elapsed_needed < ($current_cumulative + $d_music)) {
-        $offset = max(0, $elapsed_needed - $current_cumulative);
-        echo "annotate:title=\"$title\",artist=\"$artist\",cue_in=$offset:$p2{$id5}.ogg";
+    if ($d_music < 0) $d_music = 0.0;
+    if ($d_close < 0) $d_close = 0.0;
+
+    // metadati originali del brano (sempre, anche in chiusura)
+    $title  = addslashes((string)$row['title']);
+    $artist = addslashes((string)$row['author']);
+
+    // segmento MUSICA: [cur, cur + d_music)
+    $music_end = $current_cumulative + $d_music;
+    if ($elapsed_needed >= ($current_cumulative - $eps) && $elapsed_needed < ($music_end - $eps)) {
+        $offset = $elapsed_needed - $current_cumulative;
+        $offset_str = fmt_float_for_liq($offset);
+        echo "annotate:title=\"$title\",artist=\"$artist\",cue_in=$offset_str:$p2{$id5}.ogg";
         mysqli_close($con);
         exit;
     }
-    $current_cumulative += $d_music;
+    $current_cumulative = $music_end;
 
-    // segmento CHIUSURA (stesso id, directory diversa)
-    if ($elapsed_needed < ($current_cumulative + $d_close)) {
-        $offset = max(0, $elapsed_needed - $current_cumulative);
-        echo "annotate:title=\"Chiusura\",artist=\"Radio a Colori\",cue_in=$offset:$p3{$id5}.ogg";
+    // segmento CHIUSURA: [cur, cur + d_close)
+    $close_end = $current_cumulative + $d_close;
+    if ($d_close > 0.0 && $elapsed_needed >= ($current_cumulative - $eps) && $elapsed_needed < ($close_end - $eps)) {
+        $offset = $elapsed_needed - $current_cumulative;
+        $offset_str = fmt_float_for_liq($offset);
+        // NB: qui usiamo title/artist originali (non "Chiusura")
+        echo "annotate:title=\"$title\",artist=\"$artist\",cue_in=$offset_str:$p3{$id5}.ogg";
         mysqli_close($con);
         exit;
     }
-    $current_cumulative += $d_close;
+    $current_cumulative = $close_end;
 }
 
 echo $glue;
