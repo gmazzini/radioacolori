@@ -1,4 +1,0 @@
-#!/bin/bash
-cd /home/ices
-rm -rf radioacolori
-git clone https://github.com/gmazzini/radioacolori
