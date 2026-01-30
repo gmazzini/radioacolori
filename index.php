@@ -4,9 +4,13 @@ include "local.php";
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit;
 
-$now = time();
-$start_of_day = strtotime("today 00:00:00");
+// uso microtime per coerenza con durate float (anche se la UI resta a secondi)
+$now = microtime(true);
+$start_of_day = strtotime("today 00:00:00"); // int
 $elapsed_needed = $now - $start_of_day;
+
+// tolleranza anti-balletti float (1 ms)
+$eps = 0.001;
 
 // tt coerente col giorno locale
 $tt = (int) floor($start_of_day / 86400);
@@ -43,39 +47,44 @@ if ($res) {
  * Ogni brano dura total = duration + duration_extra (extra conta nei tempi ma non compare come riga).
  */
 $schedule = [];
-$t_cursor = $start_of_day;
+$t_cursor = (float)$start_of_day;
 
 foreach ($tracks as $t) {
-    $dur_music = (int) round($t['duration']);
-    $dur_extra = (int) round($t['duration_extra']);
-    if ($dur_music < 0) $dur_music = 0;
-    if ($dur_extra < 0) $dur_extra = 0;
+    $dur_music = (float)$t['duration'];
+    $dur_extra = (float)$t['duration_extra'];
+
+    if ($dur_music < 0) $dur_music = 0.0;
+    if ($dur_extra < 0) $dur_extra = 0.0;
+
+    $music_end = $t_cursor + $dur_music;
+    $end_ts    = $t_cursor + $dur_music + $dur_extra;
 
     $schedule[] = [
         'id'        => (int)$t['id'],
-        'start_ts'  => $t_cursor,
-        'music_end' => $t_cursor + $dur_music,
-        'end_ts'    => $t_cursor + $dur_music + $dur_extra,
-        'dur_music' => $dur_music,
-        'dur_extra' => $dur_extra,
+        'start_ts'  => $t_cursor,     // float
+        'music_end' => $music_end,    // float
+        'end_ts'    => $end_ts,       // float
+        'dur_music' => $dur_music,    // float
+        'dur_extra' => $dur_extra,    // float
         'dur_total' => $dur_music + $dur_extra,
         'title'     => $t['title'],
         'author'    => $t['author'],
         'genre'     => $t['genre'],
     ];
 
-    $t_cursor += ($dur_music + $dur_extra);
+    $t_cursor = $end_ts;
 }
 
 /**
  * Trovo brano corrente: now ∈ [start_ts, end_ts)
+ * (con epsilon per evitare oscillazioni ai bordi)
  */
 $current = null;
 $current_index = -1;
 
 for ($i = 0; $i < count($schedule); $i++) {
     $e = $schedule[$i];
-    if ($now >= $e['start_ts'] && $now < $e['end_ts']) {
+    if ($now >= ($e['start_ts'] - $eps) && $now < ($e['end_ts'] - $eps)) {
         $current = $e;
         $current_index = $i;
         break;
@@ -83,9 +92,10 @@ for ($i = 0; $i < count($schedule); $i++) {
 }
 
 // Countdown al prossimo BRANO (fine segmento totale brano+extra)
+// uso ceil per non arrivare a 0 “troppo presto”
 $next_seconds = 0;
 if ($current !== null) {
-    $next_seconds = max(0, (int)$current['end_ts'] - $now);
+    $next_seconds = max(0, (int)ceil(($current['end_ts'] - $now)));
 }
 
 /**
@@ -124,7 +134,7 @@ if (isset($_POST["myid"])) {
             echo "Titolo: ".$row1["title"]."\n";
             echo "Autore: ".$row1["author"]."\n";
             echo "Genere: ".$row1["genre"]."\n";
-            echo "Durata: ".(int)$row1["duration"]."s\n";
+            echo "Durata: ".fmt_secs((float)$row1["duration"])."s\n";
             echo "Identificativo: ".sprintf('%05d', $ids)."\n";
         }
     }
@@ -140,16 +150,16 @@ echo "<font color='blue'>State Ascoltando\n</font>";
 
 if ($current === null) {
     echo "<font color='red'>Nessun brano determinabile (fine palinsesto o playlist vuota)\n</font>";
-    echo "Ora: ".date("Y-m-d H:i:s", $now)."\n\n";
+    echo "Ora: ".date("Y-m-d H:i:s", (int)$now)."\n\n";
 } else {
     $id5 = sprintf('%05d', (int)$current['id']);
-    $in_extra = ($now >= $current['music_end']); // true se siamo nella parte extra
+    $in_extra = ($now >= ($current['music_end'] - $eps)); // true se siamo nella parte extra
 
     echo "<font color='red'>Titolo: ".$current["title"]."\n";
     echo "Autore: ".$current["author"]."\n";
     echo "Genere: ".$current["genre"]."\n";
-    echo "Durata: ".(int)$current["dur_music"]."s";
-    if ((int)$current["dur_extra"] > 0) echo " + extra ".(int)$current["dur_extra"]."s";
+    echo "Durata: ".fmt_secs((float)$current["dur_music"])."s";
+    if ((float)$current["dur_extra"] > 0.0) echo " + extra ".fmt_secs((float)$current["dur_extra"])."s";
     echo "\n</font>";
 
     if ($in_extra) {
@@ -181,8 +191,8 @@ if (count($schedule) === 0) {
         echo " | ".mystr($e["title"], 40);
         echo " | ".mystr($e["author"], 30);
         echo " | ".mystr($e["genre"], 20);
-        echo " | ".(int)$e["dur_music"]."s";
-        if ((int)$e["dur_extra"] > 0) echo "+".(int)$e["dur_extra"]."s";
+        echo " | ".fmt_secs((float)$e["dur_music"])."s";
+        if ((float)$e["dur_extra"] > 0.0) echo "+".fmt_secs((float)$e["dur_extra"])."s";
         echo "\n";
         if ($i === $pp) echo "</font>";
     }
@@ -200,5 +210,20 @@ function mystr($a, $l) {
     $la = mb_strlen($a);
     if ($la >= $l) return mb_substr($a, 0, $l - 1) . ">";
     return $a . str_repeat(" ", $l - $la);
+}
+
+/**
+ * Stampa secondi float in modo leggibile:
+ * - se è (quasi) intero -> "123"
+ * - altrimenti -> fino a 3 decimali, senza zeri finali
+ */
+function fmt_secs($s) {
+    $s = (float)$s;
+    $eps = 0.0005;
+    $r = round($s);
+    if (abs($s - $r) < $eps) return (string)(int)$r;
+    $str = sprintf('%.3f', $s);
+    $str = rtrim(rtrim($str, '0'), '.');
+    return $str;
 }
 ?>
