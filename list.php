@@ -6,14 +6,12 @@ if (!$con) exit;
 
 $now = microtime(true);
 $start_of_day = strtotime("today 00:00:00");
-$tt = (int) floor($start_of_day / 86400);
+$tt = (int)floor($start_of_day / 86400);
 $elapsed = $now - $start_of_day;
 
-// anti “ballo” float ai confini
 $eps = 0.001;
 
-// Carico playlist del giorno con durate float
-$sql = "SELECT p.position, p.id, t.duration, t.duration_extra
+$sql = "SELECT p.position, p.id, t.duration
         FROM playlist p
         JOIN track t ON p.id = t.id
         WHERE p.tt = $tt
@@ -25,16 +23,12 @@ if (!$res) {
 }
 
 $seq = [];
-$dur = []; 
-$ext = [];
+$dur = [];
 while ($row = mysqli_fetch_assoc($res)) {
-    $seq[] = (int)$row['id'];
+    $seq[] = (string)$row['id'];
     $d = (float)$row['duration'];
-    $e = (float)$row['duration_extra'];
     if ($d < 0) $d = 0.0;
-    if ($e < 0) $e = 0.0;
     $dur[] = $d;
-    $ext[] = $e;
 }
 mysqli_free_result($res);
 
@@ -44,22 +38,18 @@ if ($n === 0) {
     exit;
 }
 
-// Costruisco schedule start_ts per ogni brano (float), come index.php
 $sched = [];
 $cursor = (float)$start_of_day;
 for ($i = 0; $i < $n; $i++) {
     $sched[$i] = $cursor;
-    $cursor += ($dur[$i] + $ext[$i]);
+    $cursor += $dur[$i];
 }
 
-// Trovo indice corrente come in index.php: elapsed ∈ [start, end)
 $pp = 0;
 $cursor2 = 0.0;
 for ($i = 0; $i < $n; $i++) {
     $start = $cursor2;
-    $music_end = $start + $dur[$i];
-    $end = $music_end + $ext[$i];
-
+    $end = $start + $dur[$i];
     if ($elapsed >= ($start - $eps) && $elapsed < ($end - $eps)) {
         $pp = $i;
         break;
@@ -67,45 +57,45 @@ for ($i = 0; $i < $n; $i++) {
     $cursor2 = $end;
 }
 
-// Countdown “prossimo brano” (fine segmento totale duration+extra)
 $start_rel = 0.0;
-for ($i = 0; $i < $pp; $i++) $start_rel += ($dur[$i] + $ext[$i]);
-$end_rel = $start_rel + $dur[$pp] + $ext[$pp];
+for ($i = 0; $i < $pp; $i++) $start_rel += $dur[$i];
+$end_rel = $start_rel + $dur[$pp];
 $next = max(0, (int)ceil(($end_rel - $elapsed)));
 
-$in_extra = ($elapsed >= ($start_rel + $dur[$pp] - $eps));
-
-// Finestra ±4 attorno al corrente
 $f = $pp - 4; if ($f < 0) $f = 0;
 $t = $pp + 4; if ($t >= $n) $t = $n - 1;
 
-// Pre-carico metadati solo per gli ID in finestra
 $ids = array_slice($seq, $f, $t - $f + 1);
-$in = "(" . implode(",", array_map('intval', $ids)) . ")";
 $meta = [];
 
-$sqlm = "SELECT id, title, author, genre, duration
-         FROM track
-         WHERE id IN $in";
-$resm = mysqli_query($con, $sqlm);
-if ($resm) {
-    while ($r = mysqli_fetch_assoc($resm)) {
-        $id = (int)$r['id'];
-        $meta[$id] = [
-            'title'  => (string)$r['title'],
-            'author' => (string)$r['author'],
-            'genre'  => (string)$r['genre'],
-            'duration' => (float)$r['duration'],
-        ];
+if (count($ids) > 0) {
+    $inParts = [];
+    foreach ($ids as $id) {
+        $inParts[] = "'" . mysqli_real_escape_string($con, $id) . "'";
     }
-    mysqli_free_result($resm);
+    $in = "(" . implode(",", $inParts) . ")";
+
+    $sqlm = "SELECT id, title, author, genre, duration
+             FROM track
+             WHERE id IN $in";
+    $resm = mysqli_query($con, $sqlm);
+    if ($resm) {
+        while ($r = mysqli_fetch_assoc($resm)) {
+            $id = (string)$r['id'];
+            $meta[$id] = [
+                'title'    => (string)$r['title'],
+                'author'   => (string)$r['author'],
+                'genre'    => (string)$r['genre'],
+                'duration' => (float)$r['duration'],
+            ];
+        }
+        mysqli_free_result($resm);
+    }
 }
 
-// Output
 echo "tt=$tt\n";
 echo "now=" . date("Y-m-d H:i:s", (int)$now) . "\n";
 echo "next_reload_in={$next}s\n";
-if ($in_extra) echo "note=chiusura_in_corso\n";
 
 for ($i = $f; $i <= $t; $i++) {
     $id = $seq[$i];
@@ -113,7 +103,7 @@ for ($i = $f; $i <= $t; $i++) {
 
     if ($i === $pp) echo ">>";
     echo date("H:i:s", (int)$sched[$i])
-        . "," . sprintf('%05d', $id)
+        . "," . $id
         . "," . $m['title']
         . "," . $m['author']
         . "," . $m['genre']
