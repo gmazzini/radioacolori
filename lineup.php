@@ -17,17 +17,17 @@ function sql_in_list($con, $arr) {
     return "(" . implode(",", $out) . ")";
 }
 
-$listin = sql_in_list($con, $special);
+$listin  = sql_in_list($con, $special);
 $listout = sql_in_list($con, array_merge(is_array($special) ? $special : [], is_array($avoid) ? $avoid : []));
 
 $idm2 = [];
 $q = mysqli_query($con, "SELECT id FROM track WHERE score=2 AND genre NOT IN $listout ORDER BY last ASC, RAND()");
-while ($q && ($row = mysqli_fetch_assoc($q))) $idm2[] = (int)$row["id"];
+while ($q && ($row = mysqli_fetch_assoc($q))) $idm2[] = (string)$row["id"];
 if ($q) mysqli_free_result($q);
 
 $idm1 = [];
 $q = mysqli_query($con, "SELECT id FROM track WHERE score=1 AND genre NOT IN $listout ORDER BY last ASC, RAND()");
-while ($q && ($row = mysqli_fetch_assoc($q))) $idm1[] = (int)$row["id"];
+while ($q && ($row = mysqli_fetch_assoc($q))) $idm1[] = (string)$row["id"];
 if ($q) mysqli_free_result($q);
 
 $idc = [];
@@ -37,21 +37,21 @@ while ($q && ($row = mysqli_fetch_assoc($q))) {
     $gid  = (string)$row["gid"];
 
     if ($gsel === 0 || $gid === "") {
-        $idc[] = (int)$row["id"];
+        $idc[] = (string)$row["id"];
         continue;
     }
 
     $gid_esc = mysqli_real_escape_string($con, $gid);
     $q2 = mysqli_query($con, "SELECT id, duration, gsel FROM track WHERE gid='$gid_esc' ORDER BY last ASC, gsel ASC");
     if (!$q2) {
-        $idc[] = (int)$row["id"];
+        $idc[] = (string)$row["id"];
         continue;
     }
 
     $aux = [];
     while ($row2 = mysqli_fetch_assoc($q2)) {
         $aux[] = [
-            "id" => (int)$row2["id"],
+            "id" => (string)$row2["id"],
             "duration" => (float)$row2["duration"],
             "gsel" => (int)$row2["gsel"],
         ];
@@ -59,7 +59,7 @@ while ($q && ($row = mysqli_fetch_assoc($q))) {
     mysqli_free_result($q2);
 
     if (count($aux) === 0) {
-        $idc[] = (int)$row["id"];
+        $idc[] = (string)$row["id"];
         continue;
     }
 
@@ -78,7 +78,7 @@ while ($q && ($row = mysqli_fetch_assoc($q))) {
     $group_time = 0.0;
     $group_element = 0;
     foreach ($seq as $e) {
-        $idc[] = (int)$e["id"];
+        $idc[] = (string)$e["id"];
         $group_element++;
         $group_time += (float)$e["duration"];
         if ($group_time >= (float)$limit_group_time || $group_element >= (int)$limit_group_element) break;
@@ -119,9 +119,10 @@ for ($iter = 0; $iter < $max_iters; $iter++) {
         }
     }
 
-    $selid = (int)$selid;
+    $selid = (string)$selid;
+    $selid_esc = mysqli_real_escape_string($con, $selid);
 
-    $qr = mysqli_query($con, "SELECT duration, duration_extra, title, author, score FROM track WHERE id=$selid");
+    $qr = mysqli_query($con, "SELECT duration, duration_extra, title, author, score FROM track WHERE id='$selid_esc'");
     $row = $qr ? mysqli_fetch_assoc($qr) : null;
     if ($qr) mysqli_free_result($qr);
     if (!$row) {
@@ -138,15 +139,15 @@ for ($iter = 0; $iter < $max_iters; $iter++) {
     if ($mytype == 1) $content_time += $d;
     else $music_time += $d;
 
-    mysqli_query($con, "INSERT INTO playlist (tt,id,position) VALUES ($tt,$selid,$position)");
+    mysqli_query($con, "INSERT INTO playlist (tt,id,position) VALUES ($tt,'$selid_esc',$position)");
     $position++;
-    mysqli_query($con, "UPDATE track SET used=used+1,last=$tt WHERE id=$selid");
+    mysqli_query($con, "UPDATE track SET used=used+1,last=$tt WHERE id='$selid_esc'");
 
     if ($content_time <= 0.0) {
         $mytype = (count($idc) > 0) ? 1 : 0;
     } else {
         $mytype = (($music_time / $content_time) < (float)$ratio) ? 0 : 1;
-        if ($mytype == 1 && count($idc) == 0) $mytype = 0;
+        if ($mytype == 1 && count($idc) === 0) $mytype = 0;
     }
 
     if ($tot_time >= $target_total) break;
