@@ -1,120 +1,97 @@
 <?php
 include "local.php";
 
+/**
+ * SETTINGS & PATHS
+ */
+$p2   = "/home/ices/music/ogg04/";  // Base music/vocal content
+$p3   = "/home/ices/music/ogg04v/"; // Extra/Closing content
+$glue = "/home/ices/music/glue.ogg";
+$logfile = "/home/ices/sched.log";
+
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit;
 
+// Get current exact time
 $now = microtime(true);
-$epoch = (int)floor($now);
+$now_int = (int)floor($now);
 
-$start_of_day = strtotime("today 00:00:00");
-$elapsed = $now - $start_of_day;
-
-$eps = 0.001;
-
-$tt = (int)floor($start_of_day / 86400);
-
-$p2   = "/home/ices/music/ogg04/";
-$p3   = "/home/ices/music/ogg04v/";
-$glue = "/home/ices/music/glue.ogg";
-
-$logfile = "/home/ices/sched.log";
-
-function fmt_float_for_liq($v) {
-    $v = (float)$v;
-    if ($v < 0) $v = 0.0;
-    $s = sprintf('%.3f', $v);
-    $s = rtrim(rtrim($s, '0'), '.');
-    return ($s === '') ? '0' : $s;
+/**
+ * HELPER FUNCTIONS
+ */
+function fmt_liq($v) {
+    return rtrim(rtrim(sprintf('%.3f', max(0, (float)$v)), '0'), '.');
 }
 
-function esc_liq_meta($s) {
-    $s = (string)$s;
-    $s = str_replace("\\", "\\\\", $s);
-    $s = str_replace("\"", "\\\"", $s);
-    return $s;
+function esc_liq($s) {
+    return str_replace(["\\", "\""], ["\\\\", "\\\""], (string)$s);
 }
 
-function log_sched($logfile, $epoch, $path, $shift, $state, $end_epoch) {
-    $line = $epoch . " " . $path . " " . fmt_float_for_liq($shift) . " " . $state . " " . (int)$end_epoch . "\n";
+function log_sched($logfile, $epoch, $path, $shift, $state) {
+    $line = $epoch . " " . $path . " " . fmt_liq($shift) . " " . $state . "\n";
     @file_put_contents($logfile, $line, FILE_APPEND | LOCK_EX);
 }
 
-$query = "SELECT p.id, t.duration, t.duration_extra, t.title, t.author
-          FROM playlist p
-          JOIN track t ON p.id = t.id
-          WHERE p.tt = $tt
-          ORDER BY p.position ASC";
+/**
+ * QUERY LINEUP
+ * Search for the track that started before 'now' and might still be playing.
+ * We look at the last few tracks to find the one covering the current microtime.
+ */
+$query = "SELECT l.epoch, l.id, t.duration, t.duration_extra, t.title, t.author
+          FROM lineup l
+          JOIN track t ON l.id = t.id
+          WHERE l.epoch <= $now_int
+          ORDER BY l.epoch DESC LIMIT 5";
 
 $res = mysqli_query($con, $query);
 if (!$res) {
-    log_sched($logfile, $epoch, $glue, 0.0, "GLUE", $epoch);
     echo $glue;
     mysqli_close($con);
     exit;
 }
 
-$current = 0.0;
-
 while ($row = mysqli_fetch_assoc($res)) {
-    $id5 = (string)$row['id'];
+    $start_track = (float)$row['epoch'];
+    $dur_base    = (float)$row['duration'];
+    $dur_extra   = (float)$row['duration_extra'];
+    
+    $id     = (string)$row['id'];
+    $title  = esc_liq($row['title']);
+    $artist = esc_liq($row['author']);
 
-    $d_music = (float)$row['duration'];
-    $d_close = (float)$row['duration_extra'];
-    if ($d_music < 0) $d_music = 0.0;
-    if ($d_close < 0) $d_close = 0.0;
-
-    $title  = esc_liq_meta($row['title']);
-    $artist = esc_liq_meta($row['author']);
-
-    // MUSICA: [current, current + d_music)
-    $seg_start = $current;
-    $seg_end   = $current + $d_music;
-
-    if ($elapsed >= ($seg_start - $eps) && $elapsed < ($seg_end - $eps)) {
-        $offset = $elapsed - $seg_start;
-        if ($offset < 0) $offset = 0.0;
-
-        $path = $p2 . $id5 . ".ogg";
-        $end_epoch = (int)floor($start_of_day + $seg_end);
-
-        log_sched($logfile, $epoch, $path, $offset, "MUSIC", $end_epoch);
-        echo "annotate:title=\"$title\",artist=\"$artist\",cue_in=" . fmt_float_for_liq($offset) . ":" . $path;
-
-        mysqli_free_result($res);
+    // 1. Check BASE CONTENT (ogg04)
+    // Time range: [start, start + duration)
+    $base_end = $start_track + $dur_base;
+    if ($now >= $start_track && $now < $base_end) {
+        $offset = $now - $start_track;
+        $path = $p2 . $id . ".ogg";
+        
+        log_sched($logfile, $now_int, $path, $offset, "BASE");
+        echo "annotate:title=\"$title\",artist=\"$artist\",cue_in=" . fmt_liq($offset) . ":" . $path;
         mysqli_close($con);
         exit;
     }
 
-    $current = $seg_end;
-
-    // CHIUSURA: [current, current + d_close)
-    $seg_start = $current;
-    $seg_end   = $current + $d_close;
-
-    if ($d_close > 0.0 && $elapsed >= ($seg_start - $eps) && $elapsed < ($seg_end - $eps)) {
-        $offset = $elapsed - $seg_start;
-        if ($offset < 0) $offset = 0.0;
-
-        $path = $p3 . $id5 . ".ogg";
-        $end_epoch = (int)floor($start_of_day + $seg_end);
-
-        // titolo/autore originali anche in chiusura
-        log_sched($logfile, $epoch, $path, $offset, "CLOSE", $end_epoch);
-        echo "annotate:title=\"$title\",artist=\"$artist\",cue_in=" . fmt_float_for_liq($offset) . ":" . $path;
-
-        mysqli_free_result($res);
+    // 2. Check EXTRA CONTENT (ogg04v)
+    // Time range: [start + duration, start + duration + duration_extra)
+    $extra_start = $base_end;
+    $extra_end   = $extra_start + $dur_extra;
+    if ($dur_extra > 0 && $now >= $extra_start && $now < $extra_end) {
+        // Offset logic: here we NEVER cut the special content start if possible,
+        // but for absolute sync with lineup epoch, we calculate offset from its own start.
+        $offset = $now - $extra_start;
+        $path = $p3 . $id . ".ogg";
+        
+        log_sched($logfile, $now_int, $path, $offset, "EXTRA");
+        // As per request: cue_in applied to extra if called mid-stream
+        echo "annotate:title=\"$title\",artist=\"$artist\",cue_in=" . fmt_liq($offset) . ":" . $path;
         mysqli_close($con);
         exit;
     }
-
-    $current = $seg_end;
 }
 
-mysqli_free_result($res);
-mysqli_close($con);
-
-log_sched($logfile, $epoch, $glue, 0.0, "GLUE", $epoch);
+// FALLBACK: If nothing is scheduled, play glue
+log_sched($logfile, $now_int, $glue, 0.0, "GLUE");
 echo $glue;
-?>
 
+mysqli_close($con);
