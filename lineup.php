@@ -23,7 +23,6 @@ $avoid_list   = sql_list($con, $avoid);
 
 /**
  * 1. CONTINUITY LOGIC
- * Check for the last track to ensure a gapless timeline
  */
 $absolute_start = gmmktime(0, 0, 0, 2, 1, 2026); 
 $q_last = mysqli_query($con, "SELECT l.epoch, t.duration, t.duration_extra FROM lineup l JOIN track t ON l.id = t.id ORDER BY l.epoch DESC LIMIT 1");
@@ -55,25 +54,26 @@ while ($current_epoch < $end_threshold) {
 
     /**
      * DECISION LOGIC
+     * Added 'score > 0' to avoid using jingles/service files (score 0)
      */
     if ($remaining < 3600) {
         $mode = "FILLER";
-        $where = "genre NOT IN $special_list AND genre NOT IN $avoid_list AND (duration + duration_extra) < 240";
+        $where = "score > 0 AND genre NOT IN $special_list AND genre NOT IN $avoid_list AND (duration + duration_extra) < 240";
         $order = "(duration + duration_extra) ASC";
         $pool_size = 5;
     } elseif ($current_hour >= 22 || $current_hour < 4 || $current_ratio < $ratio) {
         $mode = "MUSIC";
-        $where = "genre NOT IN $special_list AND genre NOT IN $avoid_list";
+        $where = "score > 0 AND genre NOT IN $special_list AND genre NOT IN $avoid_list";
         $order = "score DESC, last ASC";
         $pool_size = 60; 
     } else {
         $mode = "VOCAL";
-        $where = "genre IN $special_list";
+        $where = "score > 0 AND genre IN $special_list";
         $order = "score DESC, last ASC";
         $pool_size = 60;
     }
 
-    // Selection query
+    // Selection query focusing only on Score 1 and 2
     $sql = "SELECT id, duration, duration_extra, score, genre FROM track 
             WHERE $where AND genre NOT IN $avoid_list 
             ORDER BY $order LIMIT $pool_size";
@@ -85,33 +85,31 @@ while ($current_epoch < $end_threshold) {
     if (count($candidates) > 0) {
         $track = $candidates[array_rand($candidates)];
     } else {
-        // Fallback to absolute oldest
-        $q_fb = mysqli_query($con, "SELECT id, duration, duration_extra, score, genre FROM track WHERE genre NOT IN $avoid_list ORDER BY last ASC LIMIT 1");
+        // Fallback limited to tracks with score > 0
+        $q_fb = mysqli_query($con, "SELECT id, duration, duration_extra, score, genre FROM track 
+                                     WHERE score > 0 AND genre NOT IN $avoid_list 
+                                     ORDER BY last ASC LIMIT 1");
         $track = mysqli_fetch_assoc($q_fb);
     }
 
-    if (!$track) break;
+    if (!$track) {
+        echo "Error: No tracks with score > 0 found in database!\n";
+        break;
+    }
 
     $id_esc = mysqli_real_escape_string($con, $track['id']);
     $d_raw = (float)$track['duration'] + (float)$track['duration_extra'];
     
-    // Database Insertion
     if (mysqli_query($con, "INSERT INTO lineup (epoch, id) VALUES ($current_epoch, '$id_esc')")) {
         mysqli_query($con, "UPDATE track SET used = used + 1, last = $current_epoch WHERE id = '$id_esc'");
         
-        // Track stats by GENRE (Music vs Vocal)
         if (in_array($track['genre'], $special)) {
             $time_vocal += $d_raw;
         } else {
             $time_music += $d_raw;
         }
         
-        // Track stats by SCORE (Quality 1 vs 2)
-        if ((int)$track['score'] === 2) {
-            $count_s2++;
-        } else {
-            $count_s1++;
-        }
+        if ((int)$track['score'] === 2) { $count_s2++; } else { $count_s1++; }
         
         $current_epoch += (int)ceil($d_raw);
     }
@@ -141,4 +139,5 @@ echo "----------------------------------------\n";
 
 mysqli_close($con);
 ?>
+
 
