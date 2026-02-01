@@ -47,38 +47,55 @@ echo "--- Generation Start: $generation_day_label (Starting at Epoch $current_ep
  */
 while ($current_epoch < $end_threshold) {
     $remaining = $end_threshold - $current_epoch;
+    $current_ratio = ($time_vocal > 0) ? ($time_music / $time_vocal) : 999;
 
-    // Decision Logic: Closure mode (last 10 mins) or Ratio balancing
-    if ($remaining < 600) {
+    /**
+     * DECISION LOGIC
+     * Priority 1: If less than 1 hour remains, use only short music (Filler)
+     * Priority 2: If ratio is below target, force music
+     * Priority 3: Otherwise, play vocal content
+     */
+    if ($remaining < 3600) { 
         $mode = "filler"; 
-    } elseif ($time_vocal == 0 || ($time_music / $time_vocal) >= $ratio) {
-        $mode = "vocal"; // score 2
+        $query_filter = "score = 1 AND (duration + duration_extra) < 240"; // Tracks under 4 mins
+        $query_order = "(duration + duration_extra) ASC";
+    } elseif ($current_ratio < $ratio) {
+        $mode = "music";
+        $query_filter = "score = 1";
+        $query_order = "last ASC";
     } else {
-        $mode = "music"; // score 1
+        $mode = "vocal";
+        $query_filter = "score = 2";
+        $query_order = "last ASC";
     }
 
-    // Selection query based on mode
-    if ($mode == "filler") {
-        // shortest music possible to minimize daily "drift"
-        $q = mysqli_query($con, "SELECT id, duration, duration_extra, score FROM track WHERE score=1 ORDER BY (duration + duration_extra) ASC LIMIT 1");
-    } elseif ($mode == "vocal") {
-        $q = mysqli_query($con, "SELECT id, duration, duration_extra, score FROM track WHERE score=2 ORDER BY last ASC LIMIT 1");
-    } else {
-        $q = mysqli_query($con, "SELECT id, duration, duration_extra, score FROM track WHERE score=1 ORDER BY last ASC LIMIT 1");
+    // Execution of the selection
+    $q = mysqli_query($con, "SELECT id, duration, duration_extra, score FROM track 
+                             WHERE $query_filter 
+                             ORDER BY $query_order LIMIT 1");
+
+    // Fallback: if 'filler' query returns empty, grab any shortest music track
+    if (mysqli_num_rows($q) == 0) {
+        $fallback_filter = ($mode == "vocal") ? "score = 2" : "score = 1";
+        $q = mysqli_query($con, "SELECT id, duration, duration_extra, score FROM track 
+                                 WHERE $fallback_filter ORDER BY last ASC LIMIT 1");
     }
 
     $track = mysqli_fetch_assoc($q);
-    if (!$track) break;
+    if (!$track) {
+        echo "Error: No tracks found for mode $mode\n";
+        break;
+    }
 
     $id_esc = mysqli_real_escape_string($con, $track['id']);
     $d_raw = (float)$track['duration'] + (float)$track['duration_extra'];
     $dur_totale = (int)ceil($d_raw);
 
-    // Insert into lineup and update track history
+    // Database updates
     if (mysqli_query($con, "INSERT INTO lineup (epoch, id) VALUES ($current_epoch, '$id_esc')")) {
         mysqli_query($con, "UPDATE track SET used = used + 1, last = $current_epoch WHERE id = '$id_esc'");
         
-        // Update local stats
+        // Stats update
         if ($track['score'] == 2) {
             $count_vocal++;
             $time_vocal += $d_raw;
@@ -96,12 +113,11 @@ while ($current_epoch < $end_threshold) {
  */
 $final_ratio = ($time_vocal > 0) ? round($time_music / $time_vocal, 2) : "Inf.";
 echo "Target Date: $generation_day_label\n";
-echo "Music: $count_music tracks (" . gmdate("H:i:s", (int)$time_music) . ")\n";
-echo "Vocal: $count_vocal tracks (" . gmdate("H:i:s", (int)$time_vocal) . ")\n";
-echo "Measured Ratio: $final_ratio (Target: $ratio)\n";
+echo "Music Tracks: $count_music (" . gmdate("H:i:s", (int)$time_music) . ")\n";
+echo "Vocal Tracks: $count_vocal (" . gmdate("H:i:s", (int)$time_vocal) . ")\n";
+echo "Final Measured Ratio: $final_ratio (Target: $ratio)\n";
 echo "End Epoch: $current_epoch (" . date('Y-m-d H:i:s', $current_epoch) . " UTC)\n";
 echo "Daily drift: " . ($current_epoch - $end_threshold) . " seconds beyond target.\n";
 
 mysqli_close($con);
 ?>
-
