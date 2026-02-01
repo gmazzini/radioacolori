@@ -1,166 +1,139 @@
 <?php
 include "local.php";
 
+// Set timezone for Local Time calculations (adjust to your local zone)
+$local_tz = new DateTimeZone('Europe/Rome');
+$utc_tz = new DateTimeZone('UTC');
+
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
-if (!$con) exit;
+if (!$con) exit("DB Connection failed");
 
-$todayY = (int)date('Y');
-$todayM = (int)date('n');
-$todayD = (int)date('j');
+// 1. Get Date from URL or default to today UTC
+$today = new DateTime('today', $utc_tz);
+$Y = isset($_GET['y']) ? (int)$_GET['y'] : (int)$today->format('Y');
+$M = isset($_GET['m']) ? (int)$_GET['m'] : (int)$today->format('m');
+$D = isset($_GET['d']) ? (int)$_GET['d'] : (int)$today->format('d');
 
-$Y = isset($_GET['y']) ? (int)$_GET['y'] : $todayY;
-$M = isset($_GET['m']) ? (int)$_GET['m'] : $todayM;
-$D = isset($_GET['d']) ? (int)$_GET['d'] : $todayD;
+// Build the UTC start and end of the chosen day
+$start_of_day = new DateTime("$Y-$M-$D 00:00:00", $utc_tz);
+$start_ts = $start_of_day->getTimestamp();
+$end_ts = $start_ts + 86399;
 
-if ($Y < 1970) $Y = 1970;
-if ($Y > 2100) $Y = 2100;
-if ($M < 1) $M = 1;
-if ($M > 12) $M = 12;
-
-$daysInMonth = (int)cal_days_in_month(CAL_GREGORIAN, $M, $Y);
-if ($D < 1) $D = 1;
-if ($D > $daysInMonth) $D = $daysInMonth;
-
-$start_of_day = mktime(0, 0, 0, $M, $D, $Y);
-$tt = (int)floor($start_of_day / 86400);
-
-$sql = "SELECT p.position, p.id, t.title, t.author, t.genre, t.duration, t.duration_extra, t.score, t.used, t.gid, t.gsel
-        FROM playlist p
-        JOIN track t ON p.id = t.id
-        WHERE p.tt = $tt
-        ORDER BY p.position ASC";
+/**
+ * 2. FETCH DATA FROM NEW LINEUP TABLE
+ * We join with 'track' to get the metadata using 'epoch' as the time reference
+ */
+$sql = "SELECT l.epoch, l.id, t.title, t.author, t.genre, t.duration, t.duration_extra, t.score, t.used
+        FROM lineup l
+        JOIN track t ON l.id = t.id
+        WHERE l.epoch >= $start_ts AND l.epoch <= $end_ts
+        ORDER BY l.epoch ASC";
 
 $res = mysqli_query($con, $sql);
 $rows = [];
 if ($res) {
     while ($r = mysqli_fetch_assoc($res)) {
-        $d = (float)$r['duration'];
-        $e = (float)$r['duration_extra'];
-        if ($d < 0) $d = 0.0;
-        if ($e < 0) $e = 0.0;
-
-        $rows[] = [
-            'position' => (int)$r['position'],
-            'id'       => (string)$r['id'],
-            'title'    => (string)$r['title'],
-            'author'   => (string)$r['author'],
-            'genre'    => (string)$r['genre'],
-            'duration' => $d,
-            'extra'    => $e,
-            'score'    => isset($r['score']) ? (int)$r['score'] : 0,
-            'used'     => isset($r['used']) ? (int)$r['used'] : 0,
-            'gid'      => isset($r['gid']) ? (string)$r['gid'] : '',
-            'gsel'     => isset($r['gsel']) ? (int)$r['gsel'] : 0,
-        ];
+        $rows[] = $r;
     }
     mysqli_free_result($res);
 }
 
 mysqli_close($con);
 
+// Helper functions for formatting
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
-
-function fmt_secs($s) {
-    $s = (float)$s;
-    $eps = 0.0005;
-    $r = round($s);
-    if (abs($s - $r) < $eps) return (string)(int)$r;
-    $str = sprintf('%.3f', $s);
-    $str = rtrim(rtrim($str, '0'), '.');
-    return $str === '' ? '0' : $str;
-}
+function fmt_secs($s) { return round((float)$s, 2) . "s"; }
 
 header('Content-Type: text/html; charset=utf-8');
-
-echo "<!doctype html><html><head><meta charset='utf-8'><title>Playlist viewer</title>
-<style>
-body{font-family:monospace;}
-form{margin:10px 0 20px 0;}
-table{border-collapse:collapse;}
-td,th{padding:4px 8px;border:1px solid #ddd;}
-th{background:#f5f5f5;}
-.small{font-size:12px;color:#555;}
-pre{white-space:pre;}
-.blue{color:#006;}
-</style>
-</head><body>";
-
-echo "<h2>Playlist prevista</h2>";
-
-echo "<form method='get'>
-<label>Giorno <input type='number' name='d' min='1' max='31' value='".h($D)."' style='width:5em'></label>
-<label>Mese <input type='number' name='m' min='1' max='12' value='".h($M)."' style='width:5em'></label>
-<label>Anno <input type='number' name='y' min='1970' max='2100' value='".h($Y)."' style='width:7em'></label>
-<button type='submit'>Vai</button>
-<span class='small'>&nbsp; (default: oggi)</span>
-</form>";
-
-$tsChosen = $start_of_day;
-$tsPrev = $tsChosen - 86400;
-$tsNext = $tsChosen + 86400;
-
-echo "<div class='small'>";
-echo "<a href='?d=".date('j',$tsPrev)."&m=".date('n',$tsPrev)."&y=".date('Y',$tsPrev)."'>← ieri</a> | ";
-echo "<a href='?d=".date('j')."&m=".date('n')."&y=".date('Y')."'>oggi</a> | ";
-echo "<a href='?d=".date('j',$tsNext)."&m=".date('n',$tsNext)."&y=".date('Y',$tsNext)."'>domani →</a>";
-echo "</div><br>";
-
-echo "<div class='small'>Data: <b>".h(date('Y-m-d', $start_of_day))."</b> — tt=<b>".h($tt)."</b></div><br>";
-
-if (count($rows) === 0) {
-    echo "<p><b>Nessuna playlist trovata</b> per questo giorno (tt=$tt).</p>";
-    echo "</body></html>";
-    exit;
-}
-
-$cum = 0.0;
-$total_music = 0.0;
-$total_extra = 0.0;
-
-echo "<table>";
-echo "<tr>
-<th>#</th><th>Start</th><th>ID</th><th>Titolo</th><th>Autore</th><th>Genere</th>
-<th>Dur</th><th>Extra</th><th>Tot</th><th>Score</th><th>Used</th><th>GID</th><th>Gsel</th>
-</tr>";
-
-foreach ($rows as $r) {
-    $start_ts = (float)$start_of_day + $cum;
-    $start_str = date('H:i:s', (int)$start_ts);
-
-    $d = (float)$r['duration'];
-    $e = (float)$r['extra'];
-
-    $total_music += $d;
-    $total_extra += $e;
-
-    $isSpecial = in_array($r['genre'], $special ?? [], true);
-    $cls = $isSpecial ? " class='blue'" : "";
-
-    echo "<tr$cls>";
-    echo "<td>".h($r['position'])."</td>";
-    echo "<td>".h($start_str)."</td>";
-    echo "<td>".h($r['id'])."</td>";
-    echo "<td>".h($r['title'])."</td>";
-    echo "<td>".h($r['author'])."</td>";
-    echo "<td>".h($r['genre'])."</td>";
-    echo "<td style='text-align:right'>".h(fmt_secs($d))."s</td>";
-    echo "<td style='text-align:right'>".h(fmt_secs($e))."s</td>";
-    echo "<td style='text-align:right'>".h(fmt_secs($d+$e))."s</td>";
-    echo "<td style='text-align:right'>".h($r['score'])."</td>";
-    echo "<td style='text-align:right'>".h($r['used'])."</td>";
-    echo "<td>".h($r['gid'])."</td>";
-    echo "<td style='text-align:right'>".h($r['gsel'])."</td>";
-    echo "</tr>";
-
-    $cum += ($d + $e);
-}
-echo "</table>";
-
-echo "<br><div class='small'>";
-echo "Totale musica (solo duration): <b>".h(fmt_secs($total_music))."s</b> — ";
-echo "Totale extra: <b>".h(fmt_secs($total_extra))."s</b> — ";
-echo "Totale complessivo: <b>".h(fmt_secs($total_music + $total_extra))."s</b>";
-echo "</div>";
-
-echo "</body></html>";
 ?>
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Lineup Viewer (UTC Based)</title>
+    <style>
+        body{font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px; padding: 20px;}
+        table{border-collapse:collapse; width: 100%; margin-top: 20px;}
+        td,th{padding:8px; border:1px solid #eee; text-align: left;}
+        th{background:#f8f9fa; color: #333; position: sticky; top: 0;}
+        tr:hover{background: #f1f1f1;}
+        .vocal-row{color:#d9534f; font-weight: bold;} /* Red for vocal content */
+        .music-row{color:#2e6da4;} /* Blue for music */
+        .small{font-size:12px; color:#666;}
+        .nav-bar{margin-bottom: 20px; background: #eee; padding: 10px; border-radius: 4px;}
+        .time-col{background: #fafafa; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+<h2>Schedule for <?php echo h($start_of_day->format('Y-m-d')); ?> (UTC Day)</h2>
+
+<div class='nav-bar'>
+    <form method='get' style="display: inline-block;">
+        <input type='number' name='d' min='1' max='31' value='<?php echo $D; ?>' style='width:40px'>
+        <input type='number' name='m' min='1' max='12' value='<?php echo $M; ?>' style='width:40px'>
+        <input type='number' name='y' min='1970' max='2100' value='<?php echo $Y; ?>' style='width:60px'>
+        <button type='submit'>Go to Date</button>
+    </form>
+    |
+    <?php 
+    $prev = (clone $start_of_day)->modify('-1 day');
+    $next = (clone $start_of_day)->modify('+1 day');
+    ?>
+    <a href="?d=<?php echo $prev->format('d&m=m&y=Y'); ?>">« Previous Day</a> |
+    <a href="?d=<?php echo date('d&m=m&y=Y'); ?>">Today</a> |
+    <a href="?d=<?php echo $next->format('d&m=m&y=Y'); ?>">Next Day »</a>
+</div>
+
+<?php if (count($rows) === 0): ?>
+    <p>No tracks scheduled for this day.</p>
+<?php else: ?>
+    <table>
+        <thead>
+            <tr>
+                <th>UTC Start</th>
+                <th>Local Start</th>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Genre</th>
+                <th>Duration</th>
+                <th>Score</th>
+                <th>Used</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php 
+            foreach ($rows as $r): 
+                // Time conversion logic
+                $dt = new DateTime("@" . $r['epoch']);
+                $dt_utc = clone $dt; $dt_utc->setTimezone($utc_tz);
+                $dt_loc = clone $dt; $dt_loc->setTimezone($local_tz);
+                
+                $isVocal = in_array($r['genre'], $special);
+                $rowClass = $isVocal ? 'vocal-row' : 'music-row';
+            ?>
+            <tr class="<?php echo $rowClass; ?>">
+                <td class="time-col"><?php echo $dt_utc->format('H:i:s'); ?></td>
+                <td class="time-col" style="color: #666;"><?php echo $dt_loc->format('H:i:s'); ?></td>
+                <td><?php echo h($r['id']); ?></td>
+                <td><?php echo h($r['title']); ?></td>
+                <td><?php echo h($r['author']); ?></td>
+                <td><span class="small"><?php echo h($r['genre']); ?></span></td>
+                <td><?php echo fmt_secs($r['duration'] + $r['duration_extra']); ?></td>
+                <td><?php echo $r['score']; ?></td>
+                <td><?php echo $r['used']; ?></td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+<?php endif; ?>
+
+<div class='small' style="margin-top: 20px;">
+    * <strong>UTC Time</strong> is the reference for the server schedule.<br>
+    * <strong>Local Time</strong> is calculated based on <?php echo $local_tz->getName(); ?>.
+</div>
+
+</body>
+</html>
+
