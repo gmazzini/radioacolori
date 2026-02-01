@@ -4,7 +4,7 @@ include "local.php";
 $p2   = "/home/ices/music/ogg04/";
 $p3   = "/home/ices/music/ogg04v/";
 $glue = "/home/ices/music/glue.ogg";
-$cut_file = "/run/cutted.ogg";
+$cut_file = "/run/cutted.wav"; // Usiamo WAV per velocità e precisione
 $logfile  = "/home/ices/sched.log";
 
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
@@ -31,7 +31,6 @@ if ($row) {
     $offset = $now - (float)$row['epoch'];
     $dur_base = (float)$row['duration'];
     
-    // Scegliamo la sorgente (BASE o EXTRA)
     if ($offset < $dur_base) {
         $src = $p2 . $id . ".ogg";
         $off = $offset;
@@ -43,24 +42,20 @@ if ($row) {
     }
 
     if (file_exists($src) && ($off < $dur)) {
-        // COMANDO FFmpeg
-        $cmd = "/usr/bin/ffmpeg -y -ss " . fmt_liq($off) . " -i " . escapeshellarg($src) . " -t " . fmt_liq($dur - $off) . " -c copy $cut_file 2>&1";
+        // Taglio istantaneo in WAV (mono, 22050Hz per matchare Liquidsoap)
+        $cmd = "/usr/bin/ffmpeg -y -ss " . fmt_liq($off) . " -i " . escapeshellarg($src) . " -t " . fmt_liq($dur - $off) . " -acodec pcm_s16le -ar 22050 -ac 1 $cut_file 2>&1";
         
         exec($cmd, $out, $ret);
 
-        if ($ret === 0 && file_exists($cut_file)) {
+        if ($ret === 0) {
+            // Passiamo il WAV a Liquidsoap
             echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\":$cut_file";
-            file_put_contents($logfile, "[" . date("Y-m-d H:i:s") . "] SUCCESS: Created $cut_file (ID: $id)\n", FILE_APPEND);
             exit;
-        } else {
-            // Se fallisce logghiamo il comando e l'errore
-            $err = implode(" ", $out);
-            file_put_contents($logfile, "[" . date("Y-m-d H:i:s") . "] FFMPEG FAIL: $cmd | ERROR: $err\n", FILE_APPEND);
         }
-    } else {
-        file_put_contents($logfile, "[" . date("Y-m-d H:i:s") . "] FILE MISSING OR OFFSET OUT: $src (Offset: $off)\n", FILE_APPEND);
     }
 }
 
+// Fallback se qualcosa fallisce o siamo in un buco di programmazione
 echo $glue;
 mysqli_close($con);
+
