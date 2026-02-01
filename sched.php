@@ -87,8 +87,14 @@ if ($row) {
         exec($cmd, $out, $ret);
 
         if ($ret === 0) {
+            // Calcolo della durata residua: (Durata Base - Offset usato) + Durata Extra
+            $remaining_base = max(0, $dur_base - $safe_off);
+            $total_duration = $remaining_base + $dur_extra;
             log_sched($logfile, $now, $id, $cut_file, $safe_off, $state, (int)$epoch_start);
-            echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\":" . $cut_file;
+        
+            // Output per Liquidsoap con parametro duration (espresso in secondi)
+            echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\",duration=\"" . $total_duration . "\":" . $cut_file;
+        
             mysqli_close($con);
             exit;
         }
