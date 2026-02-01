@@ -3,7 +3,7 @@ include "local.php";
 
 /** 
  * ULTRA-MINIMALIST WHATSAPP VIEW 
- * Focus: Local Time, ID, Title
+ * Fixed alignment and spacing
  */
 
 date_default_timezone_set('UTC');
@@ -47,23 +47,19 @@ if ($res) {
         $dt->setTimezone($local_tz);
         $time = $dt->format("H:i");
 
-        $marker = " ";
+        // Current track marker logic - no extra spaces
+        $marker = "";
         if ($now >= $start && $now < ($start + $dur)) {
             $marker = ">";
             $found_current = true;
             $next_change = (int)ceil(($start + $dur) - $now);
         }
 
-        // Output format: [>] TIME [ID] TITLE
-        // Title is limited to 25 chars to keep line single on most phones
+        // Title trimming
         $title = mb_strimwidth($r['title'], 0, 25, "..");
         
-        printf("%s%s [%s] %s\n", 
-            $marker, 
-            $time, 
-            $r['id'], 
-            $title
-        );
+        // Clean line output without leading padding
+        echo $marker . $time . " [" . $r['id'] . "] " . $title . "\n";
     }
 }
 
@@ -73,3 +69,4 @@ if ($found_current) {
 
 mysqli_close($con);
 ?>
+
