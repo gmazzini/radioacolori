@@ -23,64 +23,80 @@ function log_sched($logfile, $now, $id, $path, $shift, $state, $epoch_start) {
     @file_put_contents($logfile, $line, FILE_APPEND | LOCK_EX);
 }
 
-// QUERY: Cerchiamo la traccia che copre il momento attuale (considerando durata base + extra)
+/**
+ * LOGICA: Cerchiamo la traccia che dovrebbe essere in onda. 
+ * Se il 'now' ha già superato la durata della BASE, quella traccia è "scaduta" 
+ * perché non tagliamo l'EXTRA. Quindi passiamo alla successiva.
+ */
 $query = "SELECT l.epoch, l.id, t.duration, t.duration_extra, t.title, t.author
-          FROM lineup l
-          JOIN track t ON l.id = t.id
-          WHERE (l.epoch + t.duration + t.duration_extra) > $now
-          AND l.epoch <= $now
-          ORDER BY l.epoch ASC LIMIT 1";
+          FROM lineup l JOIN track t ON l.id = t.id
+          WHERE l.epoch <= $now_int ORDER BY l.epoch DESC LIMIT 1";
 
 $res = mysqli_query($con, $query);
 $row = mysqli_fetch_assoc($res);
 
 if ($row) {
-    $id = $row['id'];
     $epoch_start = (float)$row['epoch'];
     $dur_base = (float)$row['duration'];
-    $dur_extra = (float)$row['duration_extra'];
-    $offset_total = $now - $epoch_start;
+    $offset_base = $now - $epoch_start;
 
-    // Se mancano meno di 2 secondi alla fine totale, passiamo oltre per evitare loop
-    if ($offset_total >= ($dur_base + $dur_extra - 2)) {
-         $row = null; // Forza il salto al fallback o alla traccia successiva
-    } else {
-        if ($offset_total < $dur_base) {
-            $src = $p2 . $id . ".ogg";
-            $off = $offset_total;
-            $dur_seg = $dur_base;
-            $state = "BASE";
-        } else {
-            $src = $p3 . $id . ".ogg";
-            $off = $offset_total - $dur_base;
-            $dur_seg = $dur_extra;
-            $state = "EXTRA";
-        }
-
-        if (file_exists($src)) {
-            $rem = $dur_seg - $off;
-            $cmd = "/usr/bin/ffmpeg -y -ss " . fmt_liq($off) . " -i " . escapeshellarg($src) . " -t " . fmt_liq($rem) . " -acodec pcm_s16le -ar 22050 -ac 1 $cut_file 2>&1";
-            exec($cmd, $out, $ret);
-
-            if ($ret === 0) {
-                log_sched($logfile, $now, $id, $cut_file, $off, $state, (int)$epoch_start);
-                echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\":$cut_file";
-                mysqli_close($con);
-                exit;
-            }
+    // Se la parte musicale è già finita, cerchiamo la traccia successiva
+    if ($offset_base >= ($dur_base - 0.2)) {
+        $q_next = "SELECT l.epoch, l.id, t.duration, t.duration_extra, t.title, t.author
+                   FROM lineup l JOIN track t ON l.id = t.id
+                   WHERE l.epoch > $epoch_start ORDER BY l.epoch ASC LIMIT 1";
+        $res_next = mysqli_query($con, $q_next);
+        $row = mysqli_fetch_assoc($res_next);
+        
+        if ($row) {
+            $epoch_start = (float)$row['epoch'];
+            $offset_base = $now - $epoch_start; // Sarà probabilmente negativo o vicino a 0
         }
     }
 }
 
-// Se non c'è nulla in corso, cerca la prossima traccia imminente (entro i prossimi 10 sec)
-$query_next = "SELECT l.epoch, l.id, t.title, t.author 
-               FROM lineup l JOIN track t ON l.id = t.id 
-               WHERE l.epoch > $now ORDER BY l.epoch ASC LIMIT 1";
-$res_n = mysqli_query($con, $query_next);
-if ($row_n = mysqli_fetch_assoc($res_n)) {
-    // Se la prossima è vicina, possiamo aspettare o mandare glue breve
+if ($row) {
+    $id = $row['id'];
+    $dur_extra = (float)$row['duration_extra'];
+    $safe_off = max(0, $offset_base);
+    
+    $src_base  = $p2 . $id . ".ogg";
+    $src_extra = $p3 . $id . ".ogg";
+
+    // Costruiamo il comando: BASE (tagliata) + EXTRA (sempre intera)
+    if (file_exists($src_base)) {
+        if ($dur_extra > 0 && file_exists($src_extra)) {
+            $cmd = sprintf(
+                "/usr/bin/ffmpeg -y -ss %s -i %s -i %s -filter_complex '[0:a][1:a]concat=n=2:v=0:a=1' -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
+                fmt_liq($safe_off),
+                escapeshellarg($src_base),
+                escapeshellarg($src_extra),
+                escapeshellarg($cut_file)
+            );
+            $state = "MIX_FULL_EXTRA";
+        } else {
+            $cmd = sprintf(
+                "/usr/bin/ffmpeg -y -ss %s -i %s -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
+                fmt_liq($safe_off),
+                escapeshellarg($src_base),
+                escapeshellarg($cut_file)
+            );
+            $state = "BASE_ONLY";
+        }
+
+        exec($cmd, $out, $ret);
+
+        if ($ret === 0) {
+            log_sched($logfile, $now, $id, $cut_file, $safe_off, $state, (int)$epoch_start);
+            echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\":" . $cut_file;
+            mysqli_close($con);
+            exit;
+        }
+    }
 }
 
-log_sched($logfile, $now, "GLUE", $glue, 0, "FALLBACK", 0);
+// Fallback estremo
+log_sched($logfile, $now, "GLUE", $glue, 0, "GLUE", 0);
 echo $glue;
 mysqli_close($con);
+
