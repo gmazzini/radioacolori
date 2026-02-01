@@ -1,7 +1,9 @@
 <?php
 include "local.php";
 
-// Environment Setup
+/** 
+ * ENVIRONMENT SETUP 
+ */
 set_time_limit(0);
 ignore_user_abort(true);
 date_default_timezone_set('UTC');
@@ -44,7 +46,7 @@ $count_s1 = 0; $count_s2 = 0;
 
 $last_was_vocal = false; 
 $active_gid = null;      
-$required_music_time = 0.0; // Cumulative "debt" of music to play
+$required_music_time = 0.0; // Cumulative music "debt"
 
 echo "--- Generation Start: $generation_day_label ---\n";
 
@@ -53,54 +55,51 @@ echo "--- Generation Start: $generation_day_label ---\n";
  */
 while ($current_epoch < $end_threshold) {
     $remaining = $end_threshold - $current_epoch;
-    $current_hour = (int)date('G', $current_epoch);
     $exclude_sql = !empty($used_today) ? "AND id NOT IN " . sql_list($con, $used_today) : "";
 
     /**
      * DECISION LOGIC
-     * Rule 1: Night Time (22-04) or Final Filler Hour -> MUSIC ONLY
-     * Rule 2: If we haven't reached the required music time yet -> MUSIC ONLY
-     * Rule 3: If last track was Vocal -> MUSIC ONLY (Interleaving)
+     * - Final Hour: Strictly Music Filler to hit zero drift.
+     * - Debt/Interleaving: If we owe music or just played vocal -> Music.
+     * - Default: Vocal (Priority Score 2) if ratio is healthy.
      */
-    $is_night = ($current_hour >= 22 || $current_hour < 4);
     $is_filler_zone = ($remaining < 3600);
     $needs_music_balance = ($time_music < $required_music_time);
 
     if ($is_filler_zone) {
         $mode = "FILLER";
-        $where = "score > 0 AND genre NOT IN $special_list AND genre NOT IN $avoid_list AND (duration + duration_extra) < 240 $exclude_sql";
+        $where = "score > 0 AND genre NOT IN $special_list AND genre NOT IN $avoid_list AND (duration + duration_extra) < 180 $exclude_sql";
         $order = "(duration + duration_extra) ASC";
-    } elseif ($is_night || $needs_music_balance || $last_was_vocal) {
+    } elseif ($needs_music_balance || $last_was_vocal) {
         $mode = "MUSIC";
         $where = "score > 0 AND genre NOT IN $special_list AND genre NOT IN $avoid_list $exclude_sql";
-        $order = "score DESC, last ASC";
+        $order = "score DESC, last ASC"; // Prioritize Premium Music
     } else {
         $mode = "VOCAL";
-        // Attempt to continue GID sequence if available
         if ($active_gid) {
             $gid_esc = mysqli_real_escape_string($con, $active_gid);
             $where = "score > 0 AND genre IN $special_list AND gid = '$gid_esc' $exclude_sql";
-            $order = "gsel ASC";
+            $order = "gsel ASC"; // Sequential group play
         } else {
             $where = "score > 0 AND genre IN $special_list $exclude_sql";
-            $order = "score DESC, last ASC";
+            $order = "score DESC, last ASC"; // Prioritize Premium Vocal
         }
     }
 
-    // Selection
+    // Candidate selection (Top 30 for randomization)
     $sql = "SELECT id, duration, duration_extra, score, genre, gid, gsel FROM track 
             WHERE $where AND genre NOT IN $avoid_list 
-            ORDER BY $order LIMIT 20";
+            ORDER BY $order LIMIT 30";
     $res = mysqli_query($con, $sql);
     
     $candidates = [];
     while($r = mysqli_fetch_assoc($res)) $candidates[] = $r;
 
     if (count($candidates) > 0) {
-        // If it's a specific GID sequence, take the next one. Otherwise, shuffle.
+        // Maintain sequence for GIDs, otherwise random pick
         $track = ($active_gid && $mode == "VOCAL") ? $candidates[0] : $candidates[array_rand($candidates)];
     } else {
-        // Fallback: Reset GID and pick oldest available music
+        // Fallback: Reset active group and grab oldest music
         $active_gid = null;
         $q_fb = mysqli_query($con, "SELECT id, duration, duration_extra, score, genre, gid, gsel FROM track 
                                      WHERE score > 0 AND genre NOT IN $special_list AND genre NOT IN $avoid_list 
@@ -111,7 +110,7 @@ while ($current_epoch < $end_threshold) {
     if (!$track) break;
 
     /**
-     * INSERTION & DEBT CALCULATION
+     * INSERTION & DEBT UPDATE
      */
     $id_esc = mysqli_real_escape_string($con, $track['id']);
     $d_raw = (float)$track['duration'] + (float)$track['duration_extra'];
@@ -124,12 +123,11 @@ while ($current_epoch < $end_threshold) {
             $time_vocal += $d_raw;
             $last_was_vocal = true;
             $active_gid = !empty($track['gid']) ? $track['gid'] : null;
-            // Add to the music debt: every 1s of vocal needs $ratio seconds of music
+            // Charge the music debt
             $required_music_time += ($d_raw * $ratio);
         } else {
             $time_music += $d_raw;
             $last_was_vocal = false;
-            // We do NOT reset active_gid here; we want to resume it once music debt is paid.
         }
         
         if ((int)$track['score'] === 2) $count_s2++; else $count_s1++;
@@ -141,11 +139,15 @@ while ($current_epoch < $end_threshold) {
  * 4. FINAL REPORT
  */
 $total_items = $count_s1 + $count_s2;
-echo "\n--- Generation Report: $generation_day_label ---\n";
-echo "Tracks scheduled: $total_items (Unique: " . count($used_today) . ")\n";
+$score2_perc = ($total_items > 0) ? round(($count_s2 / $total_items) * 100, 1) : 0;
+
+echo "\n--- Final Generation Report: $generation_day_label ---\n";
+echo "Total Tracks: $total_items (Premium Score 2: $count_s2)\n";
+echo "Premium Usage: $score2_perc%\n";
+echo "Music Time: " . gmdate("H:i:s", $time_music) . " / Vocal Time: " . gmdate("H:i:s", $time_vocal) . "\n";
 echo "Final Ratio (M/V): " . ($time_vocal > 0 ? round($time_music / $time_vocal, 2) : "N/A") . " (Target: $ratio)\n";
 echo "End Time: " . date('Y-m-d H:i:s', $current_epoch) . " UTC\n";
-echo "Drift: " . ($current_epoch - $end_threshold) . "s\n";
+echo "Daily Drift: " . ($current_epoch - $end_threshold) . "s\n";
 
 mysqli_close($con);
 ?>
