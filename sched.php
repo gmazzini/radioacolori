@@ -1,10 +1,13 @@
 <?php
 include "local.php";
 
+/**
+ * CONFIGURAZIONE PERCORSI
+ */
 $p2   = "/home/ices/music/ogg04/";
 $p3   = "/home/ices/music/ogg04v/";
 $glue = "/home/ices/music/glue.ogg";
-$cut_file = "/run/cutted.wav";
+$cut_file = "/run/cutted.raw"; // Formato RAW senza header per stabilità massima
 $logfile  = "/home/ices/sched.log";
 
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
@@ -13,6 +16,9 @@ if (!$con) exit;
 $now = microtime(true);
 $now_int = (int)floor($now);
 
+/**
+ * HELPER FUNCTIONS
+ */
 function fmt_liq($v) {
     return rtrim(rtrim(sprintf('%.3f', max(0, (float)$v)), '0'), '.');
 }
@@ -24,9 +30,7 @@ function log_sched($logfile, $now, $id, $path, $shift, $state, $epoch_start) {
 }
 
 /**
- * LOGICA: Cerchiamo la traccia che dovrebbe essere in onda. 
- * Se il 'now' ha già superato la durata della BASE, quella traccia è "scaduta" 
- * perché non tagliamo l'EXTRA. Quindi passiamo alla successiva.
+ * 1. QUERY LINEUP: Cerchiamo la traccia che dovrebbe essere in onda
  */
 $query = "SELECT l.epoch, l.id, t.duration, t.duration_extra, t.title, t.author
           FROM lineup l JOIN track t ON l.id = t.id
@@ -40,7 +44,8 @@ if ($row) {
     $dur_base = (float)$row['duration'];
     $offset_base = $now - $epoch_start;
 
-    // Se la parte musicale è già finita, cerchiamo la traccia successiva
+    // Se la parte musicale è già finita, passiamo alla traccia successiva
+    // (L'EXTRA/Chiusura deve sempre partire dopo la musica, non la tagliamo mai)
     if ($offset_base >= ($dur_base - 0.2)) {
         $q_next = "SELECT l.epoch, l.id, t.duration, t.duration_extra, t.title, t.author
                    FROM lineup l JOIN track t ON l.id = t.id
@@ -50,7 +55,8 @@ if ($row) {
         
         if ($row) {
             $epoch_start = (float)$row['epoch'];
-            $offset_base = $now - $epoch_start; // Sarà probabilmente negativo o vicino a 0
+            $offset_base = $now - $epoch_start;
+            $dur_base = (float)$row['duration'];
         }
     }
 }
@@ -63,46 +69,51 @@ if ($row) {
     $src_base  = $p2 . $id . ".ogg";
     $src_extra = $p3 . $id . ".ogg";
 
-    // Costruiamo il comando: BASE (tagliata) + EXTRA (sempre intera)
+    /**
+     * 2. GENERAZIONE COMANDO FFMPEG
+     * -f s16le: Forza il formato RAW PCM (rimuove l'header WAV corrotto)
+     * filter_complex: Unisce Base (tagliata) e Extra (intera)
+     */
     if (file_exists($src_base)) {
         if ($dur_extra > 0 && file_exists($src_extra)) {
             $cmd = sprintf(
-                "/usr/bin/ffmpeg -y -ss %s -i %s -i %s -filter_complex '[0:a][1:a]concat=n=2:v=0:a=1' -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
+                "/usr/bin/ffmpeg -y -ss %s -i %s -i %s -filter_complex '[0:a][1:a]concat=n=2:v=0:a=1' -f s16le -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
                 fmt_liq($safe_off),
                 escapeshellarg($src_base),
                 escapeshellarg($src_extra),
                 escapeshellarg($cut_file)
             );
-            $state = "MIX_FULL_EXTRA";
+            $state = "MIX_RAW_FULL";
         } else {
             $cmd = sprintf(
-                "/usr/bin/ffmpeg -y -ss %s -i %s -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
+                "/usr/bin/ffmpeg -y -ss %s -i %s -f s16le -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
                 fmt_liq($safe_off),
                 escapeshellarg($src_base),
                 escapeshellarg($cut_file)
             );
-            $state = "BASE_ONLY";
+            $state = "BASE_ONLY_RAW";
         }
 
         exec($cmd, $out, $ret);
 
         if ($ret === 0) {
-            // Calcolo della durata residua: (Durata Base - Offset usato) + Durata Extra
-            $remaining_base = max(0, $dur_base - $safe_off);
-            $total_duration = $remaining_base + $dur_extra;
+            // Calcolo durata totale per aiutare Liquidsoap (anche se su RAW conta meno)
+            $total_duration = max(0, $dur_base - $safe_off) + $dur_extra;
+
             log_sched($logfile, $now, $id, $cut_file, $safe_off, $state, (int)$epoch_start);
-        
-            // Output per Liquidsoap con parametro duration (espresso in secondi)
+            
+            // L'output punta al file .raw
             echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\",duration=\"" . $total_duration . "\":" . $cut_file;
-        
             mysqli_close($con);
             exit;
         }
     }
 }
 
-// Fallback estremo
+/**
+ * 3. FALLBACK: Se tutto fallisce, suoniamo il GLUE
+ */
 log_sched($logfile, $now, "GLUE", $glue, 0, "GLUE", 0);
 echo $glue;
-mysqli_close($con);
 
+mysqli_close($con);
