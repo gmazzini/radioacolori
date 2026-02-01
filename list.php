@@ -1,124 +1,75 @@
 <?php
 include "local.php";
 
+/**
+ * MINIMALIST WHATSAPP LIST VIEW
+ * Uses lineup table and real-time epoch matching
+ */
+
+date_default_timezone_set('UTC'); // Reference is UTC as per your requirement
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit;
 
 $now = microtime(true);
-$start_of_day = strtotime("today 00:00:00");
-$tt = (int)floor($start_of_day / 86400);
-$elapsed = $now - $start_of_day;
+$now_int = (int)floor($now);
 
-$eps = 0.001;
+// 1. Fetch current track + surrounding context (4 before, 4 after)
+// First, find the starting epoch of the track playing right now
+$q_current = mysqli_query($con, "SELECT epoch FROM lineup WHERE epoch <= $now_int ORDER BY epoch DESC LIMIT 1");
+$row_current = mysqli_fetch_assoc($q_current);
+$current_track_epoch = $row_last ? (int)$row_current['epoch'] : $now_int;
 
-$sql = "SELECT p.position, p.id, t.duration
-        FROM playlist p
-        JOIN track t ON p.id = t.id
-        WHERE p.tt = $tt
-        ORDER BY p.position ASC";
+// Fetch 4 tracks before, the current one, and 4 tracks after
+$sql = "SELECT l.epoch, l.id, t.title, t.author, t.genre, t.duration, t.duration_extra
+        FROM (
+            (SELECT epoch, id FROM lineup WHERE epoch < $current_track_epoch ORDER BY epoch DESC LIMIT 4)
+            UNION
+            (SELECT epoch, id FROM lineup WHERE epoch >= $current_track_epoch ORDER BY epoch ASC LIMIT 5)
+        ) AS l
+        JOIN track t ON l.id = t.id
+        ORDER BY l.epoch ASC";
+
 $res = mysqli_query($con, $sql);
-if (!$res) {
-    mysqli_close($con);
-    exit;
-}
 
-$seq = [];
-$dur = [];
-while ($row = mysqli_fetch_assoc($res)) {
-    $seq[] = (string)$row['id'];
-    $d = (float)$row['duration'];
-    if ($d < 0) $d = 0.0;
-    $dur[] = $d;
-}
-mysqli_free_result($res);
+// 2. Output generation
+header('Content-Type: text/plain; charset=utf-8');
 
-$n = count($seq);
-if ($n === 0) {
-    mysqli_close($con);
-    exit;
-}
+echo "NOW: " . date("H:i:s", $now_int) . " UTC\n";
+echo "--------------------------\n";
 
-$sched = [];
-$cursor = (float)$start_of_day;
-for ($i = 0; $i < $n; $i++) {
-    $sched[$i] = $cursor;
-    $cursor += $dur[$i];
-}
+$found_current = false;
+$next_change = 0;
 
-$pp = 0;
-$cursor2 = 0.0;
-for ($i = 0; $i < $n; $i++) {
-    $start = $cursor2;
-    $end = $start + $dur[$i];
-    if ($elapsed >= ($start - $eps) && $elapsed < ($end - $eps)) {
-        $pp = $i;
-        break;
-    }
-    $cursor2 = $end;
-}
-
-$start_rel = 0.0;
-for ($i = 0; $i < $pp; $i++) $start_rel += $dur[$i];
-$end_rel = $start_rel + $dur[$pp];
-$next = max(0, (int)ceil(($end_rel - $elapsed)));
-
-$f = $pp - 4; if ($f < 0) $f = 0;
-$t = $pp + 4; if ($t >= $n) $t = $n - 1;
-
-$ids = array_slice($seq, $f, $t - $f + 1);
-$meta = [];
-
-if (count($ids) > 0) {
-    $inParts = [];
-    foreach ($ids as $id) {
-        $inParts[] = "'" . mysqli_real_escape_string($con, $id) . "'";
-    }
-    $in = "(" . implode(",", $inParts) . ")";
-
-    $sqlm = "SELECT id, title, author, genre, duration
-             FROM track
-             WHERE id IN $in";
-    $resm = mysqli_query($con, $sqlm);
-    if ($resm) {
-        while ($r = mysqli_fetch_assoc($resm)) {
-            $id = (string)$r['id'];
-            $meta[$id] = [
-                'title'    => (string)$r['title'],
-                'author'   => (string)$r['author'],
-                'genre'    => (string)$r['genre'],
-                'duration' => (float)$r['duration'],
-            ];
+if ($res) {
+    while ($r = mysqli_fetch_assoc($res)) {
+        $start = (int)$r['epoch'];
+        $dur_tot = (float)$r['duration'] + (float)$r['duration_extra'];
+        $end = $start + $dur_tot;
+        
+        // Marker for current playing track
+        $marker = "  ";
+        if ($now >= $start && $now < $end) {
+            $marker = ">>";
+            $found_current = true;
+            $next_change = (int)ceil($end - $now);
         }
-        mysqli_free_result($resm);
+
+        // Clean text for WhatsApp
+        $line = $marker . date("H:i", $start) . " " 
+              . substr($r['title'], 0, 20) . " - " 
+              . substr($r['author'], 0, 15) 
+              . " (" . (int)$dur_tot . "s)";
+        
+        echo $line . "\n";
     }
 }
 
-echo "tt=$tt\n";
-echo "now=" . date("Y-m-d H:i:s", (int)$now) . "\n";
-echo "next_reload_in={$next}s\n";
-
-for ($i = $f; $i <= $t; $i++) {
-    $id = $seq[$i];
-    $m = $meta[$id] ?? ['title'=>'', 'author'=>'', 'genre'=>'', 'duration'=>0.0];
-
-    if ($i === $pp) echo ">>";
-    echo date("H:i:s", (int)$sched[$i])
-        . "," . $id
-        . "," . $m['title']
-        . "," . $m['author']
-        . "," . $m['genre']
-        . "," . fmt_secs($m['duration']) . "s\n";
+if ($found_current) {
+    echo "--------------------------\n";
+    echo "NEXT CHANGE IN: {$next_change}s\n";
+} else {
+    echo "\n[No active tracks found]\n";
 }
 
 mysqli_close($con);
-
-function fmt_secs($s) {
-    $s = (float)$s;
-    $eps = 0.0005;
-    $r = round($s);
-    if (abs($s - $r) < $eps) return (string)(int)$r;
-    $str = sprintf('%.3f', $s);
-    $str = rtrim(rtrim($str, '0'), '.');
-    return $str === '' ? '0' : $str;
-}
 ?>
