@@ -2,11 +2,10 @@
 include "local.php";
 
 /** 
- * MINIMALIST WHATSAPP LIST VIEW 
- * Dual Time: UTC + LOCAL (ITA)
+ * ULTRA-MINIMALIST WHATSAPP VIEW 
+ * Focus: Local Time, ID, Title
  */
 
-// Force UTC for internal calculations
 date_default_timezone_set('UTC');
 $local_tz = new DateTimeZone('Europe/Rome');
 
@@ -16,13 +15,13 @@ if (!$con) exit;
 $now = microtime(true);
 $now_int = (int)floor($now);
 
-// 1. Get the current playing track starting point
+// 1. Locate current playing track
 $q_curr = mysqli_query($con, "SELECT epoch FROM lineup WHERE epoch <= $now_int ORDER BY epoch DESC LIMIT 1");
 $row_curr = mysqli_fetch_assoc($q_curr);
 $current_track_epoch = $row_curr ? (int)$row_curr['epoch'] : $now_int;
 
-// 2. Fetch context: 4 tracks before, the current one, and 4 tracks after
-$sql = "SELECT l.epoch, l.id, t.title, t.author, t.duration, t.duration_extra
+// 2. Fetch context (4 before, current, 4 after)
+$sql = "SELECT l.epoch, l.id, t.title, t.duration, t.duration_extra
         FROM (
             (SELECT epoch, id FROM lineup WHERE epoch < $current_track_epoch ORDER BY epoch DESC LIMIT 4)
             UNION
@@ -33,56 +32,43 @@ $sql = "SELECT l.epoch, l.id, t.title, t.author, t.duration, t.duration_extra
 
 $res = mysqli_query($con, $sql);
 
-// 3. Plain text output
 header('Content-Type: text/plain; charset=utf-8');
-
-echo "NOW: " . date("H:i:s", $now_int) . " UTC\n";
-echo "------------------------------\n";
 
 $found_current = false;
 $next_change = 0;
 
 if ($res) {
     while ($r = mysqli_fetch_assoc($res)) {
-        $start_epoch = (int)$r['epoch'];
-        $dur_tot = (float)$r['duration'] + (float)$r['duration_extra'];
-        $end_epoch = $start_epoch + $dur_tot;
+        $start = (int)$r['epoch'];
+        $dur = (float)$r['duration'] + (float)$r['duration_extra'];
         
-        // Convert times for display
-        $dt = new DateTime("@" . $start_epoch);
-        $utc_time = $dt->format("H:i");
+        // Time Conversion to Local
+        $dt = new DateTime("@" . $start);
         $dt->setTimezone($local_tz);
-        $loc_time = $dt->format("H:i");
+        $time = $dt->format("H:i");
 
-        // Current track marker
-        $marker = "  ";
-        if ($now >= $start_epoch && $now < $end_epoch) {
-            $marker = ">>";
+        $marker = " ";
+        if ($now >= $start && $now < ($start + $dur)) {
+            $marker = ">";
             $found_current = true;
-            $next_change = (int)ceil($end_epoch - $now);
+            $next_change = (int)ceil(($start + $dur) - $now);
         }
 
-        // Output line: [MARK][UTC/LOC] TITLE (DUR)
-        // Shortened to fit mobile screens
-        $title = mb_strimwidth($r['title'], 0, 18, "..");
-        $author = mb_strimwidth($r['author'], 0, 12, "..");
+        // Output format: [>] TIME [ID] TITLE
+        // Title is limited to 25 chars to keep line single on most phones
+        $title = mb_strimwidth($r['title'], 0, 25, "..");
         
-        echo sprintf("%s %s/%s %s-%s (%ds)\n", 
+        printf("%s%s [%s] %s\n", 
             $marker, 
-            $utc_time, 
-            $loc_time, 
-            $title, 
-            $author, 
-            (int)$dur_tot
+            $time, 
+            $r['id'], 
+            $title
         );
     }
 }
 
 if ($found_current) {
-    echo "------------------------------\n";
-    echo "NEXT SWAP IN: {$next_change}s\n";
-} else {
-    echo "\n[No active schedule found]\n";
+    echo "Next: {$next_change}s\n";
 }
 
 mysqli_close($con);
