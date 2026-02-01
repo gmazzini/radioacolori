@@ -1,6 +1,7 @@
 <?php
 include "local.php";
 
+// Set execution environment
 set_time_limit(0);
 ignore_user_abort(true);
 date_default_timezone_set('UTC');
@@ -8,7 +9,9 @@ date_default_timezone_set('UTC');
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit("DB Connection failed");
 
-// Helper to build SQL IN clauses
+/**
+ * SQL list helper
+ */
 function sql_list($con, $arr) {
     if (empty($arr)) return "('')";
     $esc = array_map(function($v) use ($con) { return "'" . mysqli_real_escape_string($con, $v) . "'"; }, $arr);
@@ -50,49 +53,51 @@ while ($current_epoch < $end_threshold) {
 
     /**
      * DECISION LOGIC
-     * - Night (22-04): Always Music
-     * - Day: Vocal if ratio permits, otherwise Music
-     * - In both cases: Prefer Score 2 over Score 1
      */
     if ($remaining < 3600) {
-        // Closing the day: Short music only
         $mode = "FILLER";
         $where = "genre NOT IN $special_list AND genre NOT IN $avoid_list AND (duration + duration_extra) < 240";
         $order = "(duration + duration_extra) ASC";
+        $pool_size = 5; // Keep it tight for precision
     } elseif ($current_hour >= 22 || $current_hour < 4 || $current_ratio < $ratio) {
-        // Night or Music Need: Select Music (Not in Special, Not in Avoid)
         $mode = "MUSIC";
+        // To boost quality, we focus on Score 2 even in Music mode
         $where = "genre NOT IN $special_list AND genre NOT IN $avoid_list";
         $order = "score DESC, last ASC";
+        $pool_size = 30; 
     } else {
-        // Day & Ratio OK: Select Vocal (In Special)
         $mode = "VOCAL";
         $where = "genre IN $special_list";
         $order = "score DESC, last ASC";
+        $pool_size = 30;
     }
 
-    $q = mysqli_query($con, "SELECT id, duration, duration_extra, score, genre FROM track WHERE $where ORDER BY $order LIMIT 1");
+    // Selection with Random Pick from Top Candidates
+    $sql = "SELECT id, duration, duration_extra, score, genre FROM track WHERE $where AND genre NOT IN $avoid_list ORDER BY $order LIMIT $pool_size";
+    $res = mysqli_query($con, $sql);
+    
+    $candidates = [];
+    while($row = mysqli_fetch_assoc($res)) $candidates[] = $row;
 
-    // Fallback if no specific track found
-    if (!$q || mysqli_num_rows($q) == 0) {
-        $q = mysqli_query($con, "SELECT id, duration, duration_extra, score, genre FROM track WHERE genre NOT IN $avoid_list ORDER BY last ASC LIMIT 1");
+    if (count($candidates) > 0) {
+        $track = $candidates[array_rand($candidates)];
+    } else {
+        // Absolute fallback
+        $q_fb = mysqli_query($con, "SELECT id, duration, duration_extra, score, genre FROM track WHERE genre NOT IN $avoid_list ORDER BY last ASC LIMIT 1");
+        $track = mysqli_fetch_assoc($q_fb);
     }
 
-    $track = mysqli_fetch_assoc($q);
+    if (!$track) break;
+
     $id_esc = mysqli_real_escape_string($con, $track['id']);
     $d_raw = (float)$track['duration'] + (float)$track['duration_extra'];
     
     if (mysqli_query($con, "INSERT INTO lineup (epoch, id) VALUES ($current_epoch, '$id_esc')")) {
         mysqli_query($con, "UPDATE track SET used = used + 1, last = $current_epoch WHERE id = '$id_esc'");
         
-        // Stats based on Genre
-        if (in_array($track['genre'], $special)) {
-            $time_vocal += $d_raw;
-        } else {
-            $time_music += $d_raw;
-        }
+        if (in_array($track['genre'], $special)) $time_vocal += $d_raw;
+        else $time_music += $d_raw;
         
-        // Stats based on Score
         if ($track['score'] == 2) $count_s2++; else $count_s1++;
         
         $current_epoch += (int)ceil($d_raw);
@@ -109,8 +114,9 @@ echo "Target Date: $generation_day_label\n";
 echo "Music Time: " . gmdate("H:i:s", (int)$time_music) . "\n";
 echo "Vocal Time: " . gmdate("H:i:s", (int)$time_vocal) . "\n";
 echo "Ratio Measured: $final_ratio (Target: $ratio)\n";
-echo "Score 2 usage: " . round(($count_s2 / $total_tracks) * 100, 1) . "% of total tracks\n";
+echo "Score 2 usage: " . round(($count_s2 / $total_tracks) * 100, 1) . "% ($count_s2 tracks)\n";
 echo "End Time: " . date('Y-m-d H:i:s', $current_epoch) . " UTC (Drift: " . ($current_epoch - $end_threshold) . "s)\n";
 
 mysqli_close($con);
 ?>
+
