@@ -1,9 +1,7 @@
 <?php
 include "local.php";
 
-/** 
- * ENVIRONMENT SETUP 
- */
+// Environment Setup
 set_time_limit(0);
 ignore_user_abort(true);
 date_default_timezone_set('UTC');
@@ -39,12 +37,14 @@ if ($q_last && mysqli_num_rows($q_last) > 0) {
 $end_threshold = $current_epoch + 86400;
 $generation_day_label = date('d-m-Y', $current_epoch);
 
-// 2. STATE VARIABLES
+// 2. TRACKING VARIABLES
 $used_today = []; 
 $time_music = 0.0; $time_vocal = 0.0;
 $count_s1 = 0; $count_s2 = 0;
-$last_was_vocal = false; // Flag to force music after vocal
-$active_gid = null;      // To track thematic continuity
+
+$last_was_vocal = false; 
+$active_gid = null;      
+$required_music_time = 0.0; // Cumulative "debt" of music to play
 
 echo "--- Generation Start: $generation_day_label ---\n";
 
@@ -54,29 +54,29 @@ echo "--- Generation Start: $generation_day_label ---\n";
 while ($current_epoch < $end_threshold) {
     $remaining = $end_threshold - $current_epoch;
     $current_hour = (int)date('G', $current_epoch);
-    $current_ratio = ($time_vocal > 0) ? ($time_music / $time_vocal) : 999;
-    
     $exclude_sql = !empty($used_today) ? "AND id NOT IN " . sql_list($con, $used_today) : "";
 
     /**
      * DECISION LOGIC
-     * Rule A: If last track was Vocal, MUST play Music.
-     * Rule B: Night (22-04) or Ratio < Target, MUST play Music.
-     * Rule C: Otherwise, try to continue GID sequence or start new Vocal.
+     * Rule 1: Night Time (22-04) or Final Filler Hour -> MUSIC ONLY
+     * Rule 2: If we haven't reached the required music time yet -> MUSIC ONLY
+     * Rule 3: If last track was Vocal -> MUSIC ONLY (Interleaving)
      */
-    $must_play_music = ($last_was_vocal || $current_hour >= 22 || $current_hour < 4 || $current_ratio < $ratio);
+    $is_night = ($current_hour >= 22 || $current_hour < 4);
+    $is_filler_zone = ($remaining < 3600);
+    $needs_music_balance = ($time_music < $required_music_time);
 
-    if ($remaining < 3600) {
+    if ($is_filler_zone) {
         $mode = "FILLER";
         $where = "score > 0 AND genre NOT IN $special_list AND genre NOT IN $avoid_list AND (duration + duration_extra) < 240 $exclude_sql";
         $order = "(duration + duration_extra) ASC";
-    } elseif ($must_play_music) {
+    } elseif ($is_night || $needs_music_balance || $last_was_vocal) {
         $mode = "MUSIC";
         $where = "score > 0 AND genre NOT IN $special_list AND genre NOT IN $avoid_list $exclude_sql";
         $order = "score DESC, last ASC";
     } else {
         $mode = "VOCAL";
-        // If we have an active GID, try to get the next GSEL
+        // Attempt to continue GID sequence if available
         if ($active_gid) {
             $gid_esc = mysqli_real_escape_string($con, $active_gid);
             $where = "score > 0 AND genre IN $special_list AND gid = '$gid_esc' $exclude_sql";
@@ -87,27 +87,31 @@ while ($current_epoch < $end_threshold) {
         }
     }
 
-    // Candidate selection
-    $sql = "SELECT id, duration, duration_extra, score, genre, gid, gsel FROM track WHERE $where AND genre NOT IN $avoid_list ORDER BY $order LIMIT 20";
+    // Selection
+    $sql = "SELECT id, duration, duration_extra, score, genre, gid, gsel FROM track 
+            WHERE $where AND genre NOT IN $avoid_list 
+            ORDER BY $order LIMIT 20";
     $res = mysqli_query($con, $sql);
     
     $candidates = [];
     while($r = mysqli_fetch_assoc($res)) $candidates[] = $r;
 
     if (count($candidates) > 0) {
-        // If continuing a GID, take the first one (strict GSEL order), otherwise random
+        // If it's a specific GID sequence, take the next one. Otherwise, shuffle.
         $track = ($active_gid && $mode == "VOCAL") ? $candidates[0] : $candidates[array_rand($candidates)];
     } else {
-        // Fallback: If GID sequence is finished or no candidates, reset GID and find something else
+        // Fallback: Reset GID and pick oldest available music
         $active_gid = null;
-        $q_fb = mysqli_query($con, "SELECT id, duration, duration_extra, score, genre, gid, gsel FROM track WHERE score > 0 AND genre NOT IN $avoid_list ORDER BY last ASC LIMIT 1");
+        $q_fb = mysqli_query($con, "SELECT id, duration, duration_extra, score, genre, gid, gsel FROM track 
+                                     WHERE score > 0 AND genre NOT IN $special_list AND genre NOT IN $avoid_list 
+                                     ORDER BY last ASC LIMIT 1");
         $track = mysqli_fetch_assoc($q_fb);
     }
 
     if (!$track) break;
 
     /**
-     * INSERTION & STATE UPDATE
+     * INSERTION & DEBT CALCULATION
      */
     $id_esc = mysqli_real_escape_string($con, $track['id']);
     $d_raw = (float)$track['duration'] + (float)$track['duration_extra'];
@@ -120,10 +124,12 @@ while ($current_epoch < $end_threshold) {
             $time_vocal += $d_raw;
             $last_was_vocal = true;
             $active_gid = !empty($track['gid']) ? $track['gid'] : null;
+            // Add to the music debt: every 1s of vocal needs $ratio seconds of music
+            $required_music_time += ($d_raw * $ratio);
         } else {
             $time_music += $d_raw;
             $last_was_vocal = false;
-            // We don't reset $active_gid here: we'll resume it after the music interlude
+            // We do NOT reset active_gid here; we want to resume it once music debt is paid.
         }
         
         if ((int)$track['score'] === 2) $count_s2++; else $count_s1++;
@@ -137,10 +143,9 @@ while ($current_epoch < $end_threshold) {
 $total_items = $count_s1 + $count_s2;
 echo "\n--- Generation Report: $generation_day_label ---\n";
 echo "Tracks scheduled: $total_items (Unique: " . count($used_today) . ")\n";
-echo "Score 2 usage: " . round(($count_s2 / ($total_items ?: 1)) * 100, 1) . "%\n";
-echo "Final Ratio: " . round($time_music / ($time_vocal ?: 1), 2) . " (Target: $ratio)\n";
+echo "Final Ratio (M/V): " . ($time_vocal > 0 ? round($time_music / $time_vocal, 2) : "N/A") . " (Target: $ratio)\n";
+echo "End Time: " . date('Y-m-d H:i:s', $current_epoch) . " UTC\n";
 echo "Drift: " . ($current_epoch - $end_threshold) . "s\n";
 
 mysqli_close($con);
 ?>
-
