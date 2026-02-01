@@ -1,42 +1,67 @@
 <?php
 include "local.php";
+
+// Set execution environment
+set_time_limit(0);
+ignore_user_abort(true);
 date_default_timezone_set('UTC');
 
-$target_day = $_GET['day'] ?? '01022026'; 
-$day_obj = DateTime::createFromFormat('dmY', $target_day, new DateTimeZone('UTC'));
-$start_timestamp = $day_obj->getTimestamp();
-$end_threshold = $start_timestamp + 86400;
-
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
+if (!$con) exit("DB Connection failed");
 
-// 1. Recupero punto di attacco
-$q_last = mysqli_query($con, "SELECT l.epoch, t.duration, t.duration_extra FROM lineup l JOIN track t ON l.id = t.id ORDER BY l.epoch DESC LIMIT 1");
-$current_epoch = ($row = mysqli_fetch_assoc($q_last)) ? (int)ceil($row['epoch'] + $row['duration'] + $row['duration_extra']) : $start_timestamp;
+/**
+ * 1. DEFINE THE ANCHOR POINT
+ * If the table is empty, we start from 01-02-2026 00:00:00 UTC
+ */
+$absolute_start = gmmktime(0, 0, 0, 2, 1, 2026); 
 
-// 2. Inizializzazione contatori
-$count_music = 0;
-$count_vocal = 0;
-$time_music = 0.0;
-$time_vocal = 0.0;
+// Find the last track in the lineup
+$q_last = mysqli_query($con, "
+    SELECT l.epoch, t.duration, t.duration_extra 
+    FROM lineup l 
+    JOIN track t ON l.id = t.id 
+    ORDER BY l.epoch DESC LIMIT 1
+");
 
-// 3. Loop di generazione
+if ($q_last && mysqli_num_rows($q_last) > 0) {
+    $row_last = mysqli_fetch_assoc($q_last);
+    // Continuity: next start is the exact end of the previous track
+    $current_epoch = (int)ceil($row_last['epoch'] + $row_last['duration'] + $row_last['duration_extra']);
+} else {
+    // First run ever
+    $current_epoch = $absolute_start;
+}
+
+// Define the end of this generation run (exactly 24 hours later)
+$end_threshold = $current_epoch + 86400;
+$generation_day_label = date('d-m-Y', $current_epoch);
+
+// 2. COUNTERS FOR RATIO & STATS
+$count_music = 0; $count_vocal = 0;
+$time_music = 0.0; $time_vocal = 0.0;
+
+echo "--- Generation Start: $generation_day_label (Starting at Epoch $current_epoch) ---\n";
+
+/**
+ * 3. GENERATION LOOP
+ */
 while ($current_epoch < $end_threshold) {
     $remaining = $end_threshold - $current_epoch;
-    
-    // Determinazione tipo brano in base al rapporto (ratio impostato in local.php)
-    // Se time_vocal è 0, forziamo un contenuto vocale per iniziare il calcolo
+
+    // Decision Logic: Closure mode (last 10 mins) or Ratio balancing
     if ($remaining < 600) {
-        $tipo_scelta = "filler"; // Solo musica corta nel finale
+        $mode = "filler"; 
     } elseif ($time_vocal == 0 || ($time_music / $time_vocal) >= $ratio) {
-        $tipo_scelta = "vocal";
+        $mode = "vocal"; // score 2
     } else {
-        $tipo_scelta = "music";
+        $mode = "music"; // score 1
     }
 
-    // Query di selezione filtrata per tipo (assumendo score=1 per musica, score=2 per vocal/special come da tuo script originale)
-    if ($tipo_scelta == "filler") {
+    // Selection query based on mode
+    if ($mode == "filler") {
+        // shortest music possible to minimize daily "drift"
         $q = mysqli_query($con, "SELECT id, duration, duration_extra, score FROM track WHERE score=1 ORDER BY (duration + duration_extra) ASC LIMIT 1");
-    } elseif ($tipo_scelta == "vocal") {
+    } elseif ($mode == "vocal") {
         $q = mysqli_query($con, "SELECT id, duration, duration_extra, score FROM track WHERE score=2 ORDER BY last ASC LIMIT 1");
     } else {
         $q = mysqli_query($con, "SELECT id, duration, duration_extra, score FROM track WHERE score=1 ORDER BY last ASC LIMIT 1");
@@ -49,10 +74,11 @@ while ($current_epoch < $end_threshold) {
     $d_raw = (float)$track['duration'] + (float)$track['duration_extra'];
     $dur_totale = (int)ceil($d_raw);
 
-    // Salvataggio e aggiornamento statistiche
+    // Insert into lineup and update track history
     if (mysqli_query($con, "INSERT INTO lineup (epoch, id) VALUES ($current_epoch, '$id_esc')")) {
         mysqli_query($con, "UPDATE track SET used = used + 1, last = $current_epoch WHERE id = '$id_esc'");
         
+        // Update local stats
         if ($track['score'] == 2) {
             $count_vocal++;
             $time_vocal += $d_raw;
@@ -65,13 +91,17 @@ while ($current_epoch < $end_threshold) {
     }
 }
 
-// 4. Output statistiche
+/**
+ * 4. FINAL REPORT
+ */
 $final_ratio = ($time_vocal > 0) ? round($time_music / $time_vocal, 2) : "Inf.";
-echo "Generazione $target_day completata.\n";
-echo "Brani Musicali: $count_music (" . gmdate("H:i:s", $time_music) . ")\n";
-echo "Brani Vocali: $count_vocal (" . gmdate("H:i:s", $time_vocal) . ")\n";
-echo "Rapporto finale M/V: $final_ratio (Target: $ratio)\n";
-echo "Sforo mezzanotte: " . ($current_epoch - $end_threshold) . " secondi.\n";
+echo "Target Date: $generation_day_label\n";
+echo "Music: $count_music tracks (" . gmdate("H:i:s", (int)$time_music) . ")\n";
+echo "Vocal: $count_vocal tracks (" . gmdate("H:i:s", (int)$time_vocal) . ")\n";
+echo "Measured Ratio: $final_ratio (Target: $ratio)\n";
+echo "End Epoch: $current_epoch (" . date('Y-m-d H:i:s', $current_epoch) . " UTC)\n";
+echo "Daily drift: " . ($current_epoch - $end_threshold) . " seconds beyond target.\n";
 
 mysqli_close($con);
 ?>
+
