@@ -1,7 +1,7 @@
 <?php
 include "local.php";
 
-// Impostiamo UTC per i calcoli e Rome per la visualizzazione
+// Configurazione Timezone
 date_default_timezone_set('UTC');
 $local_tz = new DateTimeZone('Europe/Rome');
 
@@ -11,12 +11,12 @@ if (!$con) exit("Errore DB");
 $now = microtime(true);
 $now_int = (int)floor($now);
 
-// 1. Trova il brano attuale (quello con epoch <= ora, più recente)
+// 1. Trova il brano attuale
 $q_curr = mysqli_query($con, "SELECT epoch FROM lineup WHERE epoch <= $now_int ORDER BY epoch DESC LIMIT 1");
 $row_curr = mysqli_fetch_assoc($q_curr);
 $current_track_epoch = $row_curr ? (int)$row_curr['epoch'] : $now_int;
 
-// 2. Recupera contesto: 3 prima e 6 dopo
+// 2. Recupera contesto (ID incluso nella query)
 $sql = "SELECT l.epoch, l.id, t.title, t.author, t.genre, t.duration, t.duration_extra
         FROM (
             (SELECT epoch, id FROM lineup WHERE epoch < $current_track_epoch ORDER BY epoch DESC LIMIT 3)
@@ -39,19 +39,16 @@ if ($res) {
         $item = [
             'id'    => $r['id'],
             'start' => $start,
-            'end'   => $start + $dur,
             'title' => $r['title'],
             'author'=> $r['author'],
             'genre' => $r['genre'],
             'dur'   => $dur,
             'is_now'=> $is_playing
         ];
-        
         if ($is_playing) $current = $item;
         $schedule[] = $item;
     }
 }
-
 $next_sec = $current ? (int)ceil($current['end'] - $now) : 0;
 ?>
 <!DOCTYPE html>
@@ -60,48 +57,78 @@ $next_sec = $current ? (int)ceil($current['end'] - $now) : 0;
     <meta charset="UTF-8">
     <title>Radio a Colori - On Air</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; color: #333; margin: 0; padding: 10px; }
-        .container { max-width: 800px; margin: auto; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .on-air { background: #fff3e0; padding: 15px; border-left: 5px solid #ff9800; margin: 15px 0; }
-        .track-title { font-size: 1.4em; font-weight: bold; color: #e65100; }
-        .countdown { font-size: 2em; font-weight: bold; color: #2e7d32; text-align: center; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        th { background: #444; color: #fff; padding: 8px; text-align: left; }
-        td { padding: 8px; border-bottom: 1px solid #eee; }
-        .row-now { background: #fff9c4; font-weight: bold; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        /* Logo e Header */
+        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .main-logo { height: 120px; margin-bottom: 10px; transition: transform 0.3s; }
+        .main-logo:hover { transform: scale(1.05); }
+        
+        /* Pulsante Diretta */
+        .btn-live { display: inline-block; background: #d32f2f; color: white; padding: 12px 25px; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 10px; text-transform: uppercase; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-live:hover { background: #b71c1c; }
+
+        /* Brano in Play */
+        .on-air { background: #e3f2fd; padding: 20px; border-radius: 10px; border-left: 8px solid #2196f3; margin: 20px 0; }
+        .track-info-main { font-size: 1.2em; color: #0d47a1; }
+        .track-title { font-size: 1.8em; font-weight: bold; display: block; }
+        .track-id-badge { background: #2196f3; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.6em; vertical-align: middle; }
+
+        /* Countdown */
+        .countdown-box { text-align: center; margin: 20px 0; }
+        #cdw { font-size: 3em; font-weight: bold; color: #388e3c; display: block; }
+
+        /* Tabella Lista */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #f8f9fa; color: #666; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; }
+        td { padding: 12px; border-bottom: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .row-now { background: #fff9c4 !important; font-weight: bold; }
+        .id-cell { font-family: monospace; color: #888; font-size: 0.85em; }
+
+        /* Footer e Crediti */
+        .footer-credits { margin-top: 40px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; font-size: 0.9em; line-height: 1.6; }
+        .blue-text { color: blue; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <img src="logo.jpg" style="height:50px;">
-        <form method="post">
-            <input type="text" name="myid" placeholder="ID Brano" style="width:60px">
-            <button type="submit">Cerca</button>
-        </form>
+        <img src="logo.jpg" class="main-logo" alt="Radio a Colori">
+        <p><strong>I Colori del Navile APS presentano Radio a Colori</strong><br>Musica libera con licenza CC-BY</p>
+        <a href="https://streaming.url" class="btn-live">▶ Suona in Diretta</a>
     </div>
 
     <div class="on-air">
+        <span class="blue-text">STATE ASCOLTANDO</span>
         <?php if ($current): ?>
-            <div style="font-size:0.8em; color:#666;">ORA IN ONDA</div>
-            <div class="track-title"><?php echo htmlspecialchars($current['title']); ?></div>
-            <div>di <b><?php echo htmlspecialchars($current['author']); ?></b></div>
+            <div class="track-info-main">
+                <span class="track-title"><?php echo htmlspecialchars($current['title']); ?></span>
+                di <strong><?php echo htmlspecialchars($current['author']); ?></strong> 
+                <span class="track-id-badge">ID: <?php echo $current['id']; ?></span>
+            </div>
+            <div style="font-size: 0.9em; margin-top:10px; color: #c62828;">
+                Genere: <?php echo htmlspecialchars($current['genre']); ?> | 
+                Durata: <?php echo (int)$current['dur']; ?>s | 
+                Inizio: <?php $d = new DateTime("@" . (int)$current['start']); $d->setTimezone($local_tz); echo $d->format("H:i:s"); ?>
+            </div>
         <?php else: ?>
             <div class="track-title">In attesa di segnale...</div>
         <?php endif; ?>
     </div>
 
-    <div class="countdown" id="cdw"><?php echo $next_sec; ?></div>
-    <div style="text-align:center; font-size:0.7em; margin-bottom:20px;">secondi al cambio brano</div>
+    <div class="countdown-box">
+        Prossimo brano tra: <span id="cdw"><?php echo $next_sec; ?></span> secondi
+    </div>
 
     <table>
         <thead>
             <tr>
-                <th>Ora Loc.</th>
-                <th>Titolo</th>
-                <th>Durata</th>
+                <th style="width: 80px;">Ora</th>
+                <th style="width: 60px;">ID</th>
+                <th>Brano (Titolo - Autore)</th>
+                <th style="width: 70px;">Durata</th>
             </tr>
         </thead>
         <tbody>
@@ -111,9 +138,10 @@ $next_sec = $current ? (int)ceil($current['end'] - $now) : 0;
             ?>
             <tr class="<?php echo $item['is_now'] ? 'row-now' : ''; ?>">
                 <td><?php echo $dt->format("H:i:s"); ?></td>
+                <td class="id-cell"><?php echo $item['id']; ?></td>
                 <td>
-                    <b><?php echo htmlspecialchars($item['title']); ?></b><br>
-                    <span style="font-size:0.8em; color:#666;"><?php echo htmlspecialchars($item['author']); ?></span>
+                    <strong><?php echo htmlspecialchars($item['title']); ?></strong> - 
+                    <span style="color: #666;"><?php echo htmlspecialchars($item['author']); ?></span>
                 </td>
                 <td><?php echo (int)$item['dur']; ?>s</td>
             </tr>
@@ -121,10 +149,24 @@ $next_sec = $current ? (int)ceil($current['end'] - $now) : 0;
         </tbody>
     </table>
 
-    <div style="text-align:center; font-size:0.8em; margin-top:20px; color:#999;">
-        Radio a Colori - UTC: <?php echo date("H:i:s"); ?> | Locali: <?php 
-            $d = new DateTime(); $d->setTimezone($local_tz); echo $d->format("H:i:s"); 
-        ?>
+    <!-- Ricerca -->
+    <div style="margin-top: 30px; text-align: center; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+        <form method="post" action="cerca.php">
+            Cerca brano per ID: <input type="text" name="myid" style="width:80px; padding: 5px;">
+            <button type="submit" style="padding: 5px 15px;">Cerca</button>
+        </form>
+    </div>
+
+    <div class="footer-credits">
+        <p><strong>Powered by I Colori del Navile APS</strong><br>
+        Email: info@radioacolori.net<br>
+        CF 91357680379 - ROC 33355</p>
+        
+        <p style="font-size: 0.8em; color: #999;">
+            Orario Server: <?php echo date("H:i:s"); ?> UTC | Orario Locale: <?php 
+                $d = new DateTime(); $d->setTimezone($local_tz); echo $d->format("H:i:s"); 
+            ?>
+        </p>
     </div>
 </div>
 
@@ -140,4 +182,3 @@ $next_sec = $current ? (int)ceil($current['end'] - $now) : 0;
 </body>
 </html>
 <?php mysqli_close($con); ?>
-
