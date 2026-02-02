@@ -11,13 +11,90 @@ if (!$con) {
 }
 mysqli_set_charset($con, 'utf8mb4');
 
-// Evita cache (importantissimo per non vedere dati "vecchi")
+// Evita cache (importantissimo)
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-$format = $_GET['format'] ?? 'json'; // json | text
+$action = $_GET['action'] ?? 'live';   // live | track
+$format = $_GET['format'] ?? 'json';   // json | text
 
+function out_json($arr) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($arr, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+function out_text($text) {
+    header('Content-Type: text/plain; charset=utf-8');
+    echo $text;
+}
+
+if ($action === 'track') {
+    // --- Track lookup by id ---
+    $id_raw = $_GET['id'] ?? '';
+    $id_raw = trim($id_raw);
+
+    if ($id_raw === '') {
+        http_response_code(400);
+        if ($format === 'text') out_text("ERROR: missing id\n");
+        else out_json(['ok' => false, 'error' => 'missing_id']);
+        mysqli_close($con);
+        exit;
+    }
+
+    // Prepared statement; supports numeric and string IDs.
+    if (ctype_digit($id_raw)) {
+        $id_int = (int)$id_raw;
+        $stmt = mysqli_prepare($con, "SELECT id, title, author, genre, duration, duration_extra FROM track WHERE id = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "i", $id_int);
+    } else {
+        $stmt = mysqli_prepare($con, "SELECT id, title, author, genre, duration, duration_extra FROM track WHERE id = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "s", $id_raw);
+    }
+
+    $ok = $stmt && mysqli_stmt_execute($stmt);
+    if (!$ok) {
+        http_response_code(500);
+        if ($format === 'text') out_text("ERROR: db\n");
+        else out_json(['ok' => false, 'error' => 'db']);
+        if ($stmt) mysqli_stmt_close($stmt);
+        mysqli_close($con);
+        exit;
+    }
+
+    $res = mysqli_stmt_get_result($stmt);
+    $row = $res ? mysqli_fetch_assoc($res) : null;
+    mysqli_stmt_close($stmt);
+
+    if (!$row) {
+        if ($format === 'text') out_text("NOT FOUND\n");
+        else out_json(['ok' => false, 'error' => 'not_found']);
+        mysqli_close($con);
+        exit;
+    }
+
+    $track = [
+        'id' => (string)$row['id'],
+        'title' => (string)$row['title'],
+        'author' => (string)($row['author'] ?? ''),
+        'genre' => (string)($row['genre'] ?? ''),
+        'duration' => (float)$row['duration'],
+        'duration_extra' => (float)$row['duration_extra'],
+        'dur_total' => (float)$row['duration'] + (float)$row['duration_extra'],
+    ];
+
+    if ($format === 'text') {
+        // Minimal human-readable output
+        out_text("Trovato: [{$track['id']}] {$track['title']} - {$track['author']}\n");
+    } else {
+        out_json(['ok' => true, 'track' => $track]);
+    }
+
+    mysqli_close($con);
+    exit;
+}
+
+// --- Default action: LIVE window (schedule around current) ---
 $now = microtime(true);
 $now_int = (int)floor($now);
 
@@ -64,48 +141,40 @@ if ($res) {
             'is_now' => $is_now
         ];
 
-        if ($is_now) {
-            $current = $item;
-        }
+        if ($is_now) $current = $item;
         $items[] = $item;
     }
 }
 
-$response = [
-    'server_now' => $now,                  // secondi (float) UTC epoch
-    'server_now_int' => $now_int,          // secondi (int)
-    'current' => $current,                 // null se non trovato
+$payload = [
+    'server_now' => $now, // float epoch seconds UTC
+    'server_now_int' => $now_int,
+    'current' => $current,
     'next_change_sec' => $current ? (int)max(0, ceil($current['end'] - $now)) : 0,
     'items' => $items
 ];
 
 if ($format === 'text') {
-    header('Content-Type: text/plain; charset=utf-8');
-
+    // KEEP "WhatsApp view" style output
     $found_current = false;
     $next_change = 0;
 
+    $out = '';
     foreach ($items as $it) {
         $marker = $it['is_now'] ? '>' : '';
         if ($it['is_now']) {
             $found_current = true;
             $next_change = (int)max(0, ceil($it['end'] - $now));
         }
-
         $title_trim = mb_strimwidth($it['title'], 0, 25, "..", "UTF-8");
-        echo $marker . $it['time_local'] . " [" . $it['id'] . "] " . $title_trim . "\n";
+        $out .= $marker . $it['time_local'] . " [" . $it['id'] . "] " . $title_trim . "\n";
     }
+    if ($found_current) $out .= "Next: {$next_change}s\n";
 
-    if ($found_current) {
-        echo "Next: {$next_change}s\n";
-    }
-
-    mysqli_close($con);
-    exit;
+    out_text($out);
+} else {
+    out_json($payload);
 }
 
-// default json
-header('Content-Type: application/json; charset=utf-8');
-echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
 mysqli_close($con);
+
