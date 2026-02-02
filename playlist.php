@@ -2,7 +2,6 @@
 include "local.php";
 
 // TIMEZONE SETTINGS
-// UTC for server/day logic, Local for display reference
 $local_tz = new DateTimeZone('Europe/Rome');
 $utc_tz   = new DateTimeZone('UTC');
 
@@ -10,7 +9,6 @@ $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit("DB Connection failed");
 
 // 1. DATE SELECTION
-// Defaults to current UTC day if no parameters are provided
 $today = new DateTime('today', $utc_tz);
 $Y = isset($_GET['y']) ? (int)$_GET['y'] : (int)$today->format('Y');
 $M = isset($_GET['m']) ? (int)$_GET['m'] : (int)$today->format('m');
@@ -21,9 +19,10 @@ $start_ts = $start_of_day->getTimestamp();
 $end_ts   = $start_ts + 86399;
 
 // 2. DATA RETRIEVAL & STATISTICS
-// gid, gsel, last are in lineup
+// lineup has only (id, epoch); everything else is in track
 $sql = "SELECT 
-            l.epoch, l.id, l.gid, l.gsel, l.last,
+            l.epoch, l.id,
+            t.gid, t.gsel, t.last,
             t.title, t.author, t.genre, t.duration, t.duration_extra, t.score, t.used
         FROM lineup l
         JOIN track t ON l.id = t.id
@@ -62,13 +61,9 @@ if ($res) {
 mysqli_close($con);
 
 // Calculate Premium Ratio %
-$premium_perc = ($stats['total_count'] > 0)
-    ? round(($stats['s2'] / $stats['total_count']) * 100, 1)
-    : 0;
+$premium_perc = ($stats['total_count'] > 0) ? round(($stats['s2'] / $stats['total_count']) * 100, 1) : 0;
 
-function h($s) {
-    return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-}
+function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 ?>
 <!doctype html>
 <html>
@@ -78,7 +73,6 @@ function h($s) {
     <style>
         body{font-family: monospace; font-size: 13px; margin: 0; padding: 20px; background: #fff;}
 
-        // Sticky header & summary
         .summary {
             background: #f8f9fa;
             padding: 15px;
@@ -102,7 +96,6 @@ function h($s) {
 
         td { padding: 6px 8px; border: 1px solid #ddd; white-space: nowrap; }
 
-        // Color coding
         .vocal-row { background-color: #ffecec !important; color: #a00; }
         .music-row { color: #004085; }
         .premium { font-weight: bold; background-color: #fff9c4 !important; }
@@ -125,8 +118,8 @@ function h($s) {
         Tracks: <span class="highlight"><?php echo $stats['total_count']; ?></span> |
         Premium (S2): <span class="highlight"><?php echo $stats['s2']; ?> (<?php echo $premium_perc; ?>%)</span> |
         Ratio M/V: <span class="highlight"><?php echo round($stats['m_time']/($stats['v_time']?:1), 2); ?></span> (Target: <?php echo $ratio; ?>) |
-        Time: Music <span class="highlight"><?php echo gmdate("H:i:s", $stats['m_time']); ?></span> -
-        Vocal <span class="highlight"><?php echo gmdate("H:i:s", $stats['v_time']); ?></span>
+        Time: Music <span class="highlight"><?php echo gmdate("H:i:s", (int)$stats['m_time']); ?></span> -
+        Vocal <span class="highlight"><?php echo gmdate("H:i:s", (int)$stats['v_time']); ?></span>
     </div>
 </div>
 
@@ -150,20 +143,16 @@ function h($s) {
     <tbody>
         <?php foreach ($rows as $r):
 
-            // Epoch to DateTime
             $dt = new DateTime("@" . (int)$r['epoch']);
             $dt_utc = clone $dt; $dt_utc->setTimezone($utc_tz);
             $dt_loc = clone $dt; $dt_loc->setTimezone($local_tz);
 
-            // Genre classification
             $isVocal = in_array($r['genre'], $special);
 
-            // Row classes
             $class = $isVocal ? 'vocal-row' : 'music-row';
             if ((int)$r['score'] === 2) $class .= ' premium';
 
-            // last epoch to UTC string
-            $lastUtcStr = '';
+            $lastUtcStr = '-';
             if (!empty($r['last']) && (int)$r['last'] > 0) {
                 $lastDt = new DateTime('@' . (int)$r['last']);
                 $lastDt->setTimezone($utc_tz);
@@ -190,3 +179,4 @@ function h($s) {
 
 </body>
 </html>
+
