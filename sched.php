@@ -46,12 +46,24 @@ if ($row) {
             // Gap is small: Start next track early from the beginning
             $safe_drift = 0;
             log_sched("EARLY_START | ID:{$row['id']} | Gap was ".sprintf('%.3f', abs($raw_drift))."s");
-        } else {
+        } 
+        else {
             // Gap is too large: Play glue
             log_sched("GAP | Next track in ".sprintf('%.2f', abs($raw_drift))."s | Playing glue");
-            echo $glue; exit;
+            $tmp_file = "/run/sched_T" . (int)time() . ".wav";
+            $gap = abs($raw_drift);
+            $fill = max(0.1, $gap - 0.1);
+            $cmd = sprintf(
+                "/usr/bin/ffmpeg -y -i %s -t %s -acodec pcm_s16le -ar 22050 -ac 1 %s 2>/dev/null",
+                escapeshellarg($glue),
+                sprintf('%.3f', $fill),
+                escapeshellarg($tmp_file)
+            );
+            exec($cmd);
+            echo $tmp_file; exit;
         }
-    } else {
+    } 
+    else {
         // Normal operation: Seek into the file to stay synced
         $safe_drift = $raw_drift;
     }
