@@ -2,7 +2,7 @@
 include "local.php";
 
 // --- CONFIGURATION ---
-$threshold = 3.0; 
+$threshold = 3.0; // Max gap to fill by starting next track early
 $p2 = "/home/radio/music/ogg04/";
 $p3 = "/home/radio/music/ogg04v/";
 $glue = "/home/radio/music/glue.wav"; 
@@ -19,14 +19,15 @@ function log_sched($msg) {
 }
 
 // --- CLEANUP ---
+// Remove temp files older than 1 hour
 foreach (glob("/run/sched_*.wav") as $f) {
     if (filemtime($f) < ($now - 3600)) @unlink($f);
 }
 
 if (!$con) exit;
 
-// --- 1. GET THE VALID TRACK (Considering threshold) ---
-// We select the track where the current time is before (start + duration - threshold)
+// --- 1. GET THE VALID TRACK ---
+// Select the first track that hasn't finished yet (considering threshold)
 $query = "SELECT l.epoch, l.id, t.duration, t.duration_extra, t.title, t.author 
           FROM lineup l JOIN track t ON l.id = t.id 
           WHERE ($now <= (l.epoch + t.duration + t.duration_extra - $threshold))
@@ -36,35 +37,47 @@ $res = mysqli_query($con, $query);
 $row = mysqli_fetch_assoc($res);
 
 if ($row) {
-    $drift = max(0, $now - (float)$row['epoch']);
-    
-    // --- 2. GAP CHECK ---
-    // If the best valid track hasn't started yet, play glue
-    if ($now < (float)$row['epoch']) {
-        log_sched("GAP | Next track in " . sprintf('%.2f', abs($now - $row['epoch'])) . "s");
-        echo $glue; exit;
+    $epoch_start = (float)$row['epoch'];
+    $raw_drift = $now - $epoch_start;
+
+    // --- 2. GAP VS EARLY START LOGIC ---
+    if ($raw_drift < 0) {
+        if (abs($raw_drift) <= $threshold) {
+            // Gap is small: Start next track early from the beginning
+            $safe_drift = 0;
+            log_sched("EARLY_START | ID:{$row['id']} | Gap was ".sprintf('%.3f', abs($raw_drift))."s");
+        } else {
+            // Gap is too large: Play glue
+            log_sched("GAP | Next track in ".sprintf('%.2f', abs($raw_drift))."s | Playing glue");
+            echo $glue; exit;
+        }
+    } else {
+        // Normal operation: Seek into the file to stay synced
+        $safe_drift = $raw_drift;
     }
 
     // --- 3. FFMPEG EXECUTION ---
     $id = $row['id'];
-    $final_dur = ((float)$row['duration'] + (float)$row['duration_extra']) - $drift;
-    $cut_file = "/run/sched_" . (int)$row['epoch'] . ".wav";
+    $final_dur = ((float)$row['duration'] + (float)$row['duration_extra']) - $safe_drift;
+    $cut_file = "/run/sched_" . (int)$epoch_start . ".wav";
 
     $cmd = sprintf(
         "/usr/bin/ffmpeg -y -ss %s -i %s -i %s -filter_complex '[0:a][1:a]concat=n=2:v=0:a=1' -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
-        sprintf('%.3f', $drift), escapeshellarg($p2.$id.".ogg"), escapeshellarg($p3.$id.".ogg"), escapeshellarg($cut_file)
+        sprintf('%.3f', $safe_drift), 
+        escapeshellarg($p2.$id.".ogg"), 
+        escapeshellarg($p3.$id.".ogg"), 
+        escapeshellarg($cut_file)
     );
 
     exec($cmd, $out, $ret);
 
     if ($ret === 0) {
-        log_sched("PLAY | ID:$id | Drift:".sprintf('%.3f', $drift)."s | Len:".sprintf('%.2f', $final_dur)."s");
+        log_sched("PLAY | ID:$id | Drift:".sprintf('%.3f', $safe_drift)."s | Len:".sprintf('%.2f', $final_dur)."s");
         echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\",duration=\"" . sprintf('%.2f', $final_dur) . "\":" . $cut_file;
         exit;
     }
 }
 
-log_sched("FALLBACK | Glue");
+log_sched("FALLBACK | No track found or FFmpeg failed");
 echo $glue;
-
 
