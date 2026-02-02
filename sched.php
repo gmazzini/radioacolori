@@ -3,28 +3,29 @@ include "local.php";
 
 $p2   = "/home/radio/music/ogg04/";
 $p3   = "/home/radio/music/ogg04v/";
-$glue = "/home/radio/music/glue.ogg";
+$glue = "/home/radio/music/glue.wav";
 $cut_file = "/run/cutted.wav";
 $logfile  = "/home/radio/sched.log";
 
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
-if (!$con) exit;
-
 $now = microtime(true);
 $now_int = (int)floor($now);
 
-function fmt_liq($v) {
-    return rtrim(rtrim(sprintf('%.3f', max(0, (float)$v)), '0'), '.');
+function log_sched($msg) {
+    global $logfile, $now;
+    $timestamp = date("Y-m-d H:i:s", (int)$now) . substr(sprintf('%.3f', $now - floor($now)), 1);
+    file_put_contents($logfile, "[$timestamp] $msg\n", FILE_APPEND);
 }
 
-function log_sched($logfile, $now, $id, $path, $shift, $state, $epoch_start) {
-    $date_str = date("Y-m-d H:i:s", (int)$now) . substr(sprintf('%.3f', $now - floor($now)), 1);
-    $line = "[$date_str] ID:$id Offset:".fmt_liq($shift)." Type:$state Start:$epoch_start Path:$path\n";
-    @file_put_contents($logfile, $line, FILE_APPEND | LOCK_EX);
+// 1. Database Check
+if (!$con) {
+    log_sched("DB_ERROR: " . mysqli_connect_error());
+    echo $glue; exit;
 }
 
-$query = "SELECT l.epoch, l.id, t.duration, t.duration_extra, t.title, t.author
-          FROM lineup l JOIN track t ON l.id = t.id
+// 2. Fetch Current Track
+$query = "SELECT l.epoch, l.id, t.duration, t.title, t.author 
+          FROM lineup l JOIN track t ON l.id = t.id 
           WHERE l.epoch <= $now_int ORDER BY l.epoch DESC LIMIT 1";
 
 $res = mysqli_query($con, $query);
@@ -32,46 +33,33 @@ $row = mysqli_fetch_assoc($res);
 
 if ($row) {
     $id = $row['id'];
-    $epoch_start = (float)$row['epoch'];
-    $dur_base = (float)$row['duration'];
-    $dur_extra = (float)$row['duration_extra'];
-    $offset_total = $now - $epoch_start;
-
-    // Se la parte musicale è finita, cerchiamo la prossima
-    if ($offset_base >= ($dur_base - 0.2)) {
-        $q_next = "SELECT l.epoch, l.id, t.duration, t.duration_extra, t.title, t.author
-                   FROM lineup l JOIN track t ON l.id = t.id
-                   WHERE l.epoch > $epoch_start ORDER BY l.epoch ASC LIMIT 1";
-        $res_next = mysqli_query($con, $q_next);
-        if ($row_n = mysqli_fetch_assoc($res_next)) {
-            $row = $row_n; $id = $row['id']; $epoch_start = (float)$row['epoch'];
-            $offset_total = $now - $epoch_start; $dur_base = (float)$row['duration']; $dur_extra = (float)$row['duration_extra'];
-        }
-    }
-
+    $drift = $now - (float)$row['epoch'];
     $src_base  = $p2 . $id . ".ogg";
     $src_extra = $p3 . $id . ".ogg";
-    $safe_off  = max(0, $offset_total);
 
-    if (file_exists($src_base)) {
-        if ($dur_extra > 0 && file_exists($src_extra)) {
-            $cmd = sprintf(
-                "/usr/bin/ffmpeg -y -ss %s -i %s -i %s -filter_complex '[0:a][1:a]concat=n=2:v=0:a=1' -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
-                fmt_liq($safe_off), escapeshellarg($src_base), escapeshellarg($src_extra), escapeshellarg($cut_file)
-            );
-        } else {
-            $cmd = sprintf(
-                "/usr/bin/ffmpeg -y -ss %s -i %s -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
-                fmt_liq($safe_off), escapeshellarg($src_base), escapeshellarg($cut_file)
-            );
-        }
-        exec($cmd, $out, $ret);
-        if ($ret === 0) {
-            log_sched($logfile, $now, $id, $cut_file, $safe_off, "WAV_OK", (int)$epoch_start);
-            echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\":" . $cut_file;
-            exit;
-        }
+    // Precise FFmpeg cutting and merging
+    $cmd = sprintf(
+        "/usr/bin/ffmpeg -y -ss %s -i %s -i %s -filter_complex '[0:a][1:a]concat=n=2:v=0:a=1' -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
+        sprintf('%.3f', $drift), 
+        escapeshellarg($src_base), 
+        escapeshellarg($src_extra), 
+        escapeshellarg($cut_file)
+    );
+
+    exec($cmd, $out, $ret);
+
+    if ($ret === 0) {
+        log_sched("PLAY_OK | ID:$id | Drift:".sprintf('%.3f', $drift)."s | Title: {$row['title']}");
+        echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\":" . $cut_file;
+        exit;
+    } else {
+        log_sched("FFMPEG_FAIL | ID:$id | Drift:".sprintf('%.3f', $drift)."s | Error: " . implode(" ", $out));
     }
+} else {
+    log_sched("GAP_DETECTED | No track found for epoch $now_int");
 }
+
+// 3. Fallback to Glue
+log_sched("FALLBACK | Playing glue.wav");
 echo $glue;
 
