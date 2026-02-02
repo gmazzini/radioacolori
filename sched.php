@@ -1,9 +1,10 @@
 <?php
 include "local.php";
 
+// Paths configuration
 $p2   = "/home/radio/music/ogg04/";
 $p3   = "/home/radio/music/ogg04v/";
-$glue = "/home/radio/music/glue.wav";
+$glue = "/home/radio/music/glue.ogg"; // Kept as ogg as per your request
 $cut_file = "/run/cutted.wav";
 $logfile  = "/home/radio/sched.log";
 
@@ -17,14 +18,13 @@ function log_sched($msg) {
     file_put_contents($logfile, "[$timestamp] $msg\n", FILE_APPEND);
 }
 
-// 1. Database Check
 if (!$con) {
-    log_sched("DB_ERROR: " . mysqli_connect_error());
+    log_sched("DB_CONNECTION_ERROR: " . mysqli_connect_error());
     echo $glue; exit;
 }
 
-// 2. Fetch Current Track
-$query = "SELECT l.epoch, l.id, t.duration, t.title, t.author 
+// Fetch current track based on epoch
+$query = "SELECT l.epoch, l.id, t.duration, t.duration_extra, t.title, t.author 
           FROM lineup l JOIN track t ON l.id = t.id 
           WHERE l.epoch <= $now_int ORDER BY l.epoch DESC LIMIT 1";
 
@@ -33,11 +33,17 @@ $row = mysqli_fetch_assoc($res);
 
 if ($row) {
     $id = $row['id'];
-    $drift = $now - (float)$row['epoch'];
+    $dur_base  = (float)$row['duration'];
+    $dur_extra = (float)$row['duration_extra'];
+    $drift     = $now - (float)$row['epoch'];
+    
+    // Calculate exact remaining duration for Liquidsoap
+    $final_duration = ($dur_base + $dur_extra) - $drift;
+
     $src_base  = $p2 . $id . ".ogg";
     $src_extra = $p3 . $id . ".ogg";
 
-    // Precise FFmpeg cutting and merging
+    // FFmpeg: Fast seek on base, concat with extra, output to high-speed /run/
     $cmd = sprintf(
         "/usr/bin/ffmpeg -y -ss %s -i %s -i %s -filter_complex '[0:a][1:a]concat=n=2:v=0:a=1' -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
         sprintf('%.3f', $drift), 
@@ -49,17 +55,22 @@ if ($row) {
     exec($cmd, $out, $ret);
 
     if ($ret === 0) {
-        log_sched("PLAY_OK | ID:$id | Drift:".sprintf('%.3f', $drift)."s | Title: {$row['title']}");
-        echo "annotate:title=\"" . addslashes($row['title']) . "\",artist=\"" . addslashes($row['author']) . "\":" . $cut_file;
+        log_sched("PLAY_OK | ID:$id | Drift:".sprintf('%.3f', $drift)."s | Remain:".sprintf('%.2f', $final_duration)."s | Title: {$row['title']}");
+        
+        // Return annotated string to Liquidsoap with explicit duration
+        echo "annotate:title=\"" . addslashes($row['title']) . 
+             "\",artist=\"" . addslashes($row['author']) . 
+             "\",duration=\"" . sprintf('%.2f', $final_duration) . 
+             "\":" . $cut_file;
         exit;
     } else {
-        log_sched("FFMPEG_FAIL | ID:$id | Drift:".sprintf('%.3f', $drift)."s | Error: " . implode(" ", $out));
+        log_sched("FFMPEG_ERROR | ID:$id | Drift:".sprintf('%.3f', $drift)."s | Log: " . implode(" ", $out));
     }
 } else {
-    log_sched("GAP_DETECTED | No track found for epoch $now_int");
+    log_sched("GAP_DETECTED | No track found for timestamp $now_int");
 }
 
-// 3. Fallback to Glue
-log_sched("FALLBACK | Playing glue.wav");
+// Final fallback
+log_sched("FALLBACK | Sending glue file");
 echo $glue;
 
