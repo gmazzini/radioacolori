@@ -3,168 +3,149 @@ include "local.php";
 
 date_default_timezone_set('UTC');
 $local_tz = new DateTimeZone('Europe/Rome');
-
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit("Errore DB");
+
+// --- LOGICA DI RICERCA ---
+$search_result = null;
+if (isset($_POST['myid']) && !empty($_POST['myid'])) {
+    $sid = mysqli_real_escape_string($con, $_POST['myid']);
+    $q_search = mysqli_query($con, "SELECT * FROM track WHERE id = '$sid' LIMIT 1");
+    $search_result = mysqli_fetch_assoc($q_search);
+}
 
 $now = microtime(true);
 $now_int = (int)floor($now);
 
-// 1. Trova il brano attuale
+// Trova brano attuale e lista
 $q_curr = mysqli_query($con, "SELECT epoch FROM lineup WHERE epoch <= $now_int ORDER BY epoch DESC LIMIT 1");
 $row_curr = mysqli_fetch_assoc($q_curr);
 $current_track_epoch = $row_curr ? (int)$row_curr['epoch'] : $now_int;
 
-// 2. Recupera contesto
 $sql = "SELECT l.epoch, l.id, t.title, t.author, t.genre, t.duration, t.duration_extra
         FROM (
             (SELECT epoch, id FROM lineup WHERE epoch < $current_track_epoch ORDER BY epoch DESC LIMIT 3)
             UNION
             (SELECT epoch, id FROM lineup WHERE epoch >= $current_track_epoch ORDER BY epoch ASC LIMIT 7)
         ) AS l
-        JOIN track t ON l.id = t.id
-        ORDER BY l.epoch ASC";
+        JOIN track t ON l.id = t.id ORDER BY l.epoch ASC";
 
 $res = mysqli_query($con, $sql);
-$schedule = [];
-$current = null;
-
+$schedule = []; $current = null;
 if ($res) {
     while ($r = mysqli_fetch_assoc($res)) {
         $start = (float)$r['epoch'];
         $dur = (float)$r['duration'] + (float)$r['duration_extra'];
         $end = $start + $dur;
         $is_playing = ($now >= $start && $now < $end);
-        
-        $item = [
-            'id'    => $r['id'],
-            'start' => $start,
-            'end'   => $end,
-            'title' => $r['title'],
-            'author'=> $r['author'],
-            'genre' => $r['genre'],
-            'dur'   => $dur,
-            'is_now'=> $is_playing
-        ];
+        $item = ['id'=>$r['id'], 'start'=>$start, 'end'=>$end, 'title'=>$r['title'], 'author'=>$r['author'], 'genre'=>$r['genre'], 'dur'=>$dur, 'is_now'=>$is_playing];
         if ($is_playing) $current = $item;
         $schedule[] = $item;
     }
 }
-
-// Calcolo secondi mancanti (evita numeri negativi assurdi)
-$next_sec = 0;
-if ($current) {
-    $diff = (int)($current['end'] - $now);
-    $next_sec = ($diff > 0) ? $diff : 0;
-}
+$next_sec = $current ? (int)max(0, ceil($current['end'] - $now)) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Radio a Colori - On Air</title>
+    <title>Radio a Colori - Live</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
-        .main-logo { height: 130px; margin-bottom: 10px; }
-        
-        .btn-live { display: inline-block; background: #d32f2f; color: white !important; padding: 15px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; margin-top: 15px; text-transform: uppercase; font-size: 1.1em; }
-        .btn-live:hover { background: #b71c1c; }
-
-        .on-air { background: #e3f2fd; padding: 20px; border-radius: 10px; border-left: 8px solid #2196f3; margin: 20px 0; }
-        .track-title { font-size: 1.8em; font-weight: bold; color: #d32f2f; display: block; }
-        .id-badge { background: #2196f3; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.7em; }
-
-        .countdown-box { text-align: center; margin: 20px 0; font-size: 1.2em; }
-        #cdw { font-size: 2.5em; font-weight: bold; color: #388e3c; display: block; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
-        th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; }
-        td { padding: 12px; border-bottom: 1px solid #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        body { font-family: sans-serif; background: #f0f2f5; color: #333; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .main-logo { height: 110px; }
+        .btn-live { display: inline-block; background: #d32f2f; color: white !important; padding: 15px 30px; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin: 10px 0; font-size: 1.1em; }
+        .on-air { background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 6px solid #2196f3; margin: 15px 0; }
+        .track-title { font-size: 1.6em; font-weight: bold; color: #d32f2f; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        td, th { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
         .row-now { background: #fff9c4 !important; font-weight: bold; }
-        
-        .footer-credits { margin-top: 40px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; font-size: 0.9em; line-height: 1.6; }
+        .search-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; }
+        .result-found { background: #e8f5e9; border: 1px solid #4caf50; padding: 10px; margin-bottom: 15px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <img src="logo.jpg" class="main-logo" alt="Radio a Colori">
-        <p><strong>I Colori del Navile APS presentano Radio a Colori</strong><br>Musica libera con licenza CC-BY</p>
-        <!-- Bottone Streaming Corretto -->
-        <a href="http://radioacolori.net" target="_blank" class="btn-live">▶ Suona in Diretta</a>
+        <img src="logo.jpg" class="main-logo">
+        <p><strong>I Colori del Navile APS presentano Radio a Colori</strong></p>
+        
+        <!-- PLAYER AUDIO NASCOSTO -->
+        <audio id="radioPlayer" src="http://radioacolori.net:8000/stream" preload="none"></audio>
+        <button onclick="togglePlay()" id="playBtn" class="btn-live">▶ Suona in Diretta</button>
     </div>
 
     <div class="on-air">
         <b style="color:blue">STATE ASCOLTANDO</b>
         <?php if ($current): ?>
-            <div>
-                <span class="track-title"><?php echo htmlspecialchars($current['title']); ?></span>
-                di <strong><?php echo htmlspecialchars($current['author']); ?></strong> 
-                <span class="id-badge">ID: <?php echo $current['id']; ?></span>
-            </div>
-            <div style="margin-top:10px; color:#555;">
-                Genere: <?php echo htmlspecialchars($current['genre']); ?> | 
-                Durata: <?php echo (int)$current['dur']; ?>s | 
-                Inizio: <?php $d = new DateTime("@" . (int)$current['start']); $d->setTimezone($local_tz); echo $d->format("H:i:s"); ?>
-            </div>
-        <?php else: ?>
-            <div class="track-title">In attesa di segnale...</div>
+            <div><span class="track-title"><?php echo htmlspecialchars($current['title']); ?></span> di <b><?php echo htmlspecialchars($current['author']); ?></b></div>
+            <small>ID: <?php echo $current['id']; ?> | Genere: <?php echo $current['genre']; ?> | Durata: <?php echo (int)$current['dur']; ?>s</small>
         <?php endif; ?>
     </div>
 
-    <div class="countdown-box">
-        Prossimo brano tra: <span id="cdw"><?php echo $next_sec; ?></span> secondi
+    <div style="text-align:center; margin:10px 0;">Prossimo brano tra: <b id="cdw" style="font-size:1.5em; color:#388e3c;"><?php echo $next_sec; ?></b> secondi</div>
+
+    <!-- RISULTATO RICERCA -->
+    <?php if ($search_result): ?>
+    <div class="result-found">
+        <b>Brano Trovato (ID <?php echo $search_result['id']; ?>):</b><br>
+        <?php echo htmlspecialchars($search_result['title']); ?> - <?php echo htmlspecialchars($search_result['author']); ?> (<?php echo $search_result['genre']; ?>)
     </div>
+    <?php endif; ?>
 
     <table>
-        <thead>
-            <tr>
-                <th style="width: 15%;">Ora</th>
-                <th style="width: 10%;">ID</th>
-                <th style="width: 60%;">Brano (Titolo - Autore)</th>
-                <th style="width: 15%;">Durata</th>
-            </tr>
-        </thead>
+        <thead><tr><th>Ora</th><th>ID</th><th>Brano</th><th>Durata</th></tr></thead>
         <tbody>
             <?php foreach ($schedule as $item): 
-                $dt = new DateTime("@" . (int)$item['start']);
-                $dt->setTimezone($local_tz);
-            ?>
+                $dt = new DateTime("@" . (int)$item['start']); $dt->setTimezone($local_tz); ?>
             <tr class="<?php echo $item['is_now'] ? 'row-now' : ''; ?>">
                 <td><?php echo $dt->format("H:i:s"); ?></td>
-                <td style="color:#888;"><?php echo $item['id']; ?></td>
-                <td>
-                    <?php echo htmlspecialchars($item['title']); ?> - 
-                    <small><?php echo htmlspecialchars($item['author']); ?></small>
-                </td>
+                <td style="color:#777; font-size:0.8em;"><?php echo $item['id']; ?></td>
+                <td><?php echo htmlspecialchars($item['title']); ?> - <small><?php echo htmlspecialchars($item['author']); ?></small></td>
                 <td><?php echo (int)$item['dur']; ?>s</td>
             </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
 
-    <div style="margin-top: 30px; text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px;">
-        <form method="post" action="cerca.php">
-            Cerca brano per ID: 
-            <input type="text" id="search_id" name="myid" style="width:80px; padding: 8px;" autocomplete="off">
-            <button type="submit" style="padding: 8px 20px; cursor:pointer;">Cerca</button>
+    <div class="search-box">
+        <form method="post">
+            Cerca per ID: <input type="text" id="search_id" name="myid" value="<?php echo $_POST['myid'] ?? ''; ?>" style="padding:5px; width:70px;">
+            <button type="submit">Cerca</button>
+            <?php if ($search_result || isset($_POST['myid'])): ?>
+                <a href="?" style="font-size:0.8em; margin-left:10px;">Pulisci</a>
+            <?php endif; ?>
         </form>
     </div>
 
-    <div class="footer-credits">
-        <p><strong>Powered by I Colori del Navile APS</strong><br>
-        Email: info@radioacolori.net | CF 91357680379 - ROC 33355</p>
+    <div style="text-align:center; font-size:0.8em; margin-top:30px; color:#999; border-top:1px solid #eee; padding-top:10px;">
+        Powered by I Colori del Navile APS | Email: info@radioacolori.net
     </div>
 </div>
 
 <script>
     var seconds = <?php echo $next_sec; ?>;
+    var player = document.getElementById('radioPlayer');
+    var playBtn = document.getElementById('playBtn');
     var isTyping = false;
 
-    // Blocca il refresh se l'utente sta scrivendo nel cerca
+    // Gestione Player
+    function togglePlay() {
+        if (player.paused) {
+            player.play();
+            playBtn.innerHTML = "⏸ Sospendi Ascolto";
+            playBtn.style.background = "#444";
+        } else {
+            player.pause();
+            player.src = player.src; // Forza reset del buffer per riprendere la diretta reale
+            playBtn.innerHTML = "▶ Suona in Diretta";
+            playBtn.style.background = "#d32f2f";
+        }
+    }
+
+    // Blocca refresh durante scrittura
     document.getElementById('search_id').onfocus = function() { isTyping = true; };
     document.getElementById('search_id').onblur = function() { isTyping = false; };
 
@@ -177,8 +158,6 @@ if ($current) {
         }
     }, 1000);
 </script>
-
 </body>
 </html>
-<?php mysqli_close($con); ?>
 
