@@ -9,7 +9,7 @@ $glue = "/home/radio/music/glue.wav";
 $logfile = "/home/radio/sched.log";
 
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
-$now = microtime(true);
+$now = microtime(true) - 126000;
 $now_int = (int)floor($now);
 
 function log_sched($msg) {
