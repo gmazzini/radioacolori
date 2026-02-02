@@ -6,7 +6,6 @@ $local_tz = new DateTimeZone('Europe/Rome');
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit("Errore DB");
 
-// --- RICERCA IN ALTO ---
 $search_result = null;
 if (isset($_POST['myid']) && !empty($_POST['myid'])) {
     $sid = mysqli_real_escape_string($con, $_POST['myid']);
@@ -17,7 +16,6 @@ if (isset($_POST['myid']) && !empty($_POST['myid'])) {
 $now = microtime(true);
 $now_int = (int)floor($now);
 
-// --- STATO RADIO ---
 $q_curr = mysqli_query($con, "SELECT epoch FROM lineup WHERE epoch <= $now_int ORDER BY epoch DESC LIMIT 1");
 $row_curr = mysqli_fetch_assoc($q_curr);
 $current_track_epoch = $row_curr ? (int)$row_curr['epoch'] : $now_int;
@@ -69,10 +67,8 @@ $next_sec = $current ? (int)max(0, ceil($current['end'] - $now)) : 0;
 
 <div class="container">
     <img src="logo.jpg" class="main-logo">
-    <p><strong>I Colori del Navile APS presentano Radio a Colori</strong><br>
-    Musica libera con licenza <strong>CC-BY</strong></p>
+    <p><strong>I Colori del Navile APS presentano Radio a Colori</strong><br></p>
 
-    <!-- RICERCA IN ALTO -->
     <div class="top-search">
         <form method="post">
             Cerca ID: <input type="text" id="search_id" name="myid" value="<?php echo htmlspecialchars($_POST['myid'] ?? ''); ?>" style="width:60px; padding:5px;">
@@ -86,7 +82,6 @@ $next_sec = $current ? (int)max(0, ceil($current['end'] - $now)) : 0;
         <?php endif; ?>
     </div>
 
-    <!-- IL TUO VECCHIO METODO: LINK DIRETTO -->
     <a href="http://radioacolori.net:8000/stream" target="_blank" class="btn-direct">▶ SUONA IN DIRETTA</a>
 
     <div class="on-air">
@@ -134,5 +129,3 @@ $next_sec = $current ? (int)max(0, ceil($current['end'] - $now)) : 0;
 </script>
 </body>
 </html>
-
-
