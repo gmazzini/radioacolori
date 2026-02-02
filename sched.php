@@ -1,5 +1,5 @@
 <?php
-include "local.php";
+include "/home/radio/local.php";
 
 // --- CONFIGURATION ---
 $threshold = 3.0; // Max gap to fill by starting next track early
