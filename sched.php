@@ -61,15 +61,15 @@ if ($row) {
     $final_dur = ((float)$row['duration'] + (float)$row['duration_extra']) - $safe_drift;
     $cut_file = "/run/sched_" . (int)time() . ".wav";
     $tmp_file = "/run/sched_T" . (int)time() . ".wav";
-
+    
     $cmd = sprintf(
-        "/usr/bin/ffmpeg -y -ss %s -i %s -i %s -filter_complex '[0:a][1:a]concat=n=2:v=0:a=1' -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
-        sprintf('%.3f', $safe_drift), 
-        escapeshellarg($p2.$id.".ogg"), 
-        escapeshellarg($p3.$id.".ogg"), 
+        "/usr/bin/ffmpeg -y -ss %s -i %s -i %s -filter_complex '[0:a][1:a]concat=n=2:v=0:a=1' -t %s -acodec pcm_s16le -ar 22050 -ac 1 %s 2>&1",
+        sprintf('%.3f', $safe_drift),
+        escapeshellarg($p2.$id.".ogg"),
+        escapeshellarg($p3.$id.".ogg"),
+        sprintf('%.3f', $final_dur),
         escapeshellarg($tmp_file)
     );
-
     exec($cmd, $out, $ret);
 
     if ($ret === 0) {
