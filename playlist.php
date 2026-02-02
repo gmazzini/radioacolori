@@ -22,7 +22,7 @@ $end_ts   = $start_ts + 86399;
 // lineup has only (id, epoch); everything else is in track
 $sql = "SELECT 
             l.epoch, l.id,
-            t.gid, t.gsel, t.last,
+            t.gid, t.gsel,
             t.title, t.author, t.genre, t.duration, t.duration_extra, t.score, t.used
         FROM lineup l
         JOIN track t ON l.id = t.id
@@ -134,7 +134,6 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE
             <th>GENRE</th>
             <th>GID</th>
             <th>GSEL</th>
-            <th>LAST (UTC)</th>
             <th>DUR</th>
             <th>SCR</th>
             <th>USED</th>
@@ -151,13 +150,6 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE
 
             $class = $isVocal ? 'vocal-row' : 'music-row';
             if ((int)$r['score'] === 2) $class .= ' premium';
-
-            $lastUtcStr = '-';
-            if (!empty($r['last']) && (int)$r['last'] > 0) {
-                $lastDt = new DateTime('@' . (int)$r['last']);
-                $lastDt->setTimezone($utc_tz);
-                $lastUtcStr = $lastDt->format('Y-m-d H:i:s');
-            }
         ?>
         <tr class="<?php echo $class; ?>">
             <td><strong><?php echo $dt_utc->format('H:i:s'); ?></strong></td>
@@ -168,7 +160,6 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE
             <td><?php echo h($r['genre']); ?></td>
             <td style="text-align:right;"><?php echo h($r['gid']); ?></td>
             <td style="text-align:right;"><?php echo h($r['gsel']); ?></td>
-            <td style="opacity:0.75;"><?php echo h($lastUtcStr); ?></td>
             <td style="text-align:right;"><?php echo (int)($r['duration'] + $r['duration_extra']); ?>s</td>
             <td style="text-align:center;"><?php echo h($r['score']); ?></td>
             <td style="text-align:right;"><?php echo h($r['used']); ?></td>
@@ -179,4 +170,3 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE
 
 </body>
 </html>
-
