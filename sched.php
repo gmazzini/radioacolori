@@ -1,11 +1,11 @@
 <?php
 include "local.php";
 
-$p2   = "/home/ices/music/ogg04/";
-$p3   = "/home/ices/music/ogg04v/";
-$glue = "/home/ices/music/glue.ogg";
+$p2   = "/home/radio/music/ogg04/";
+$p3   = "/home/radio/music/ogg04v/";
+$glue = "/home/radio/music/glue.ogg";
 $cut_file = "/run/cutted.wav";
-$logfile  = "/home/ices/sched.log";
+$logfile  = "/home/radio/sched.log";
 
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
 if (!$con) exit;
