@@ -3,9 +3,9 @@ include "/home/radio/local.php";
 
 // --- CONFIGURATION ---
 $threshold = 3.0; // Max gap to fill by starting next track early
-$p2 = "/home/radio/music/ogg04/";
-$p3 = "/home/radio/music/ogg04v/";
-$glue = "/home/radio/music/glue.wav"; 
+$p2 = "/home/radio/track/base/";
+$p3 = "/home/radio/track/extra/";
+$glue = "/home/radio/track/glue.wav"; 
 $logfile = "/home/radio/sched.log";
 
 $con = mysqli_connect($dbhost, $dbuser, $dbpassword, $dbname);
