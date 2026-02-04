@@ -16,7 +16,6 @@ foreach($oo["values"] as $k => $v){
   $genre=mysqli_real_escape_string($con,$v[8]); 
   @$gid=$v[10];
   @$gsel=(int)$v[11];
-  $duration=str_replace(",","",$v[5]);
   $score=(int)$v[1];
   $query=mysqli_query($con,"select count(id) from track where id='$id'");
   $row=mysqli_fetch_row($query);
