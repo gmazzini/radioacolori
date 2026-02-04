@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# to be modified
-# curl -L "https://docs.google.com/spreadsheets/d/1P3DRLJsepd4gmaYhf2XhqIV4_NIArscaO5Jz1h1pmyU/export?format=csv" -o track.csv
+curl -L "https://docs.google.com/spreadsheets/d/1P3DRLJsepd4gmaYhf2XhqIV4_NIArscaO5Jz1h1pmyU/export?format=csv" -o track.csv
 
 SR=22050
 CH=1
