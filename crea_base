@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# to be modified
+# curl -L "https://docs.google.com/spreadsheets/d/1P3DRLJsepd4gmaYhf2XhqIV4_NIArscaO5Jz1h1pmyU/export?format=csv" -o track.csv
+
+SR=22050
+CH=1
+
+for id in $(awk -v FPAT='([^,]+)|("[^"]+")' '$2 == "1" || $2 == "2" { val = $5; gsub(/"/, "", val); print val }' track.csv); do
+  if [ -f "/home/radio/track/base/${id}.ogg" ]; then continue; fi
+  echo $id
+
+  rm -f /run/base.mp3
+  /home/tools/drive_dw $id.mp3 1QxLyMfKftlkQTya-x2Cpu7N7JFottcYO /run/base.mp3
+  if [ ! -f "/run/base.mp3" ]; then continue; fi
+
+  tmp="/run/base.par"
+  ffmpeg -hide_banner -nostats -i /run/base.mp3 \
+    -af "loudnorm=print_format=json" -f null - 2>&1 \
+    | sed -n '/{/,/}/p' > "$tmp"
+  ii="$(grep '"input_i"'        "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+  itp="$(grep '"input_tp"'      "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+  ilra="$(grep '"input_lra"'    "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+  ith="$(grep '"input_thresh"'  "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+  to="$(grep '"target_offset"'  "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+
+  out="/home/radio/track/base/$id.ogg"
+  ffmpeg -y -hide_banner -i /run/base.mp3 -vn \
+    -af "loudnorm=linear=true:I=-5:LRA=1:tp=0:measured_I=$ii:measured_LRA=$ilra:measured_tp=$itp:measured_thresh=$ith:offset=$to:print_format=summary" \
+    -ac "$CH" -ar "$SR" \
+    -map_metadata -1 -map_chapters -1 \
+    -fflags +bitexact -flags:a +bitexact \
+    -c:a libvorbis \
+    "$out"
+    
+done
