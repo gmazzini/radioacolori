@@ -1,5 +1,5 @@
 <?php
-include "local.php";
+include "/home/radio/local.php";
 $con=mysqli_connect($dbhost,$dbuser,$dbpassword,$dbname);
 $access_token=file_get_contents("/home/www/data/access_token_google");
 $ch=curl_init();
