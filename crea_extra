@@ -1,0 +1,43 @@
+#!/bin/bash
+
+cd /home/radio/track
+SR=22050
+CH=1
+
+for ff in base/*; do
+  f1=$(basename $ff)
+  id=${f1%.*}
+  if [ -f "/home/radio/track/extra/${id}.ogg" ]; then continue; fi
+  echo $id
+
+  echo "file '/home/radio/track/voice/intro.ogg'" > /run/extra.txt
+  echo "file '/home/radio/track/voice/n"${id:0:1}".ogg'" >> /run/extra.txt
+  echo "file '/home/radio/track/voice/n"${id:1:1}".ogg'" >> /run/extra.txt
+  echo "file '/home/radio/track/voice/n"${id:2:1}".ogg'" >> /run/extra.txt
+  echo "file '/home/radio/track/voice/n"${id:3:1}".ogg'" >> /run/extra.txt
+  echo "file '/home/radio/track/voice/n"${id:4:1}".ogg'" >> /run/extra.txt
+  echo "file '/home/radio/track/voice/coda.ogg'" >> /run/extra.txt
+  ffmpeg -y -f concat -safe 0 -i /run/extra.txt \
+    -ac "$CH" -ar "$SR" \
+    /run/extra.wav
+
+  tmp="/run/extra.par"
+  ffmpeg -hide_banner -nostats -i /run/extra.wav \
+    -af "loudnorm=print_format=json" -f null - 2>&1 \
+    | sed -n '/{/,/}/p' > "$tmp"
+  ii="$(grep '"input_i"'        "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+  itp="$(grep '"input_tp"'      "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+  ilra="$(grep '"input_lra"'    "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+  ith="$(grep '"input_thresh"'  "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+  to="$(grep '"target_offset"'  "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
+
+  out="/home/radio/track/extra/$id.ogg"
+  ffmpeg -y -hide_banner -i /run/extra.wav -vn \
+    -af "loudnorm=linear=true:I=-5:LRA=1:tp=0:measured_I=$ii:measured_LRA=$ilra:measured_tp=$itp:measured_thresh=$ith:offset=$to:print_format=summary" \
+    -ac "$CH" -ar "$SR" \
+    -map_metadata -1 -map_chapters -1 \
+    -fflags +bitexact -flags:a +bitexact \
+    -c:a libvorbis \
+    "$out"
+
+done
