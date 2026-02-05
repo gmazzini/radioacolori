@@ -5,18 +5,20 @@ curl -L "https://docs.google.com/spreadsheets/d/1P3DRLJsepd4gmaYhf2XhqIV4_NIArsc
 SR=22050
 CH=1
 
-gawk -v FPAT='([^,]*)|("([^"]|"")*")*' '
+list=/run/ids.txt
+gawk -v FPAT='([^,]*)|("([^"]|"")*")' '
   {
     f8=$8
-    gsub(/^"|"$/, "", f8)
-    gsub(/\r$/, "", f8)
+    gsub(/^"|"$/, "", f8); gsub(/\r$/, "", f8)
     if (f8=="1" || f8=="2") {
       f1=$1
       gsub(/^"|"$/, "", f1)
       print f1
     }
   }
-' track.csv | while IFS= read -r id; do
+' track.csv > "$list"
+
+while IFS= read -r id; do
   if [ -f "/home/radio/track/base/${id}.ogg" ]; then continue; fi
   echo $id
 
@@ -43,4 +45,4 @@ gawk -v FPAT='([^,]*)|("([^"]|"")*")*' '
     -c:a libvorbis \
     "$out"
     
-done
+done < "$list"
