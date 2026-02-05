@@ -17,12 +17,12 @@ for ff in base/*; do
   echo "file '/home/radio/track/voice/n"${id:3:1}".ogg'" >> /run/extra.txt
   echo "file '/home/radio/track/voice/n"${id:4:1}".ogg'" >> /run/extra.txt
   echo "file '/home/radio/track/voice/coda.ogg'" >> /run/extra.txt
-  ffmpeg -y -f concat -safe 0 -i /run/extra.txt \
+  ffmpeg -nostdin -y -f concat -safe 0 -i /run/extra.txt \
     -ac "$CH" -ar "$SR" \
     /run/extra.wav
 
   tmp="/run/extra.par"
-  ffmpeg -hide_banner -nostats -i /run/extra.wav \
+  ffmpeg -nostdin -hide_banner -nostats -i /run/extra.wav \
     -af "loudnorm=print_format=json" -f null - 2>&1 \
     | sed -n '/{/,/}/p' > "$tmp"
   ii="$(grep '"input_i"'        "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
@@ -32,7 +32,7 @@ for ff in base/*; do
   to="$(grep '"target_offset"'  "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
 
   out="/home/radio/track/extra/$id.ogg"
-  ffmpeg -y -hide_banner -i /run/extra.wav -vn \
+  ffmpeg -nostdin -y -hide_banner -i /run/extra.wav -vn \
     -af "loudnorm=linear=true:I=-5:LRA=1:tp=0:measured_I=$ii:measured_LRA=$ilra:measured_tp=$itp:measured_thresh=$ith:offset=$to:print_format=summary" \
     -ac "$CH" -ar "$SR" \
     -map_metadata -1 -map_chapters -1 \
