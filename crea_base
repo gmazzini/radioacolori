@@ -5,7 +5,7 @@ curl -L "https://docs.google.com/spreadsheets/d/1P3DRLJsepd4gmaYhf2XhqIV4_NIArsc
 SR=22050
 CH=1
 
-for id in $(awk -v FPAT='([^,]+)|("[^"]+")' '$2 == "1" || $2 == "2" { val = $5; gsub(/"/, "", val); print val }' track.csv); do
+for id in $(awk -v FPAT='([^,]+)|("[^"]+")' '$8 == "1" || $8 == "2" { val = $1; gsub(/"/, "", val); print val }' track.csv); do
   if [ -f "/home/radio/track/base/${id}.ogg" ]; then continue; fi
   echo $id
 
