@@ -27,7 +27,7 @@ while IFS= read -r id; do
   if [ ! -f "/run/base.mp3" ]; then continue; fi
 
   tmp="/run/base.par"
-  ffmpeg -hide_banner -nostats -i /run/base.mp3 \
+  ffmpeg -nostdin -hide_banner -nostats -i /run/base.mp3 \
     -af "loudnorm=print_format=json" -f null - 2>&1 \
     | sed -n '/{/,/}/p' > "$tmp"
   ii="$(grep '"input_i"'        "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
@@ -37,7 +37,7 @@ while IFS= read -r id; do
   to="$(grep '"target_offset"'  "$tmp" | cut -d: -f2 | tr -cd '[:digit:].-')"
 
   out="/home/radio/track/base/$id.ogg"
-  ffmpeg -y -hide_banner -i /run/base.mp3 -vn \
+  ffmpeg -nostdin -y -hide_banner -i /run/base.mp3 -vn \
     -af "loudnorm=linear=true:I=-5:LRA=1:tp=0:measured_I=$ii:measured_LRA=$ilra:measured_tp=$itp:measured_thresh=$ith:offset=$to:print_format=summary" \
     -ac "$CH" -ar "$SR" \
     -map_metadata -1 -map_chapters -1 \
