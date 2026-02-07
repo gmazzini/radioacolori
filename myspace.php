@@ -1,10 +1,8 @@
 <?php
-
 /**
  * Usage: php myspace.php [target_space]
  */
 
-// 1. Handle CLI Input
 $targetGap = isset($argv[1]) ? (int)$argv[1] : null;
 
 if ($targetGap === null) {
@@ -18,23 +16,21 @@ if (!file_exists($csvFile)) {
     die("ERROR: File '$csvFile' not found.\n");
 }
 
-// 2. Load and sanitize data
+// 1) Load and sanitize data
 $labels = [];
 $fh = fopen($csvFile, "r");
 while (($line = fgets($fh)) !== false) {
     $row = str_getcsv($line);
     if (!empty($row[0])) {
-        // Extract first 5 chars and cast to int
         $labels[] = (int)substr($row[0], 0, 5);
     }
 }
 fclose($fh);
 
-// Dedup and sort labels
 $labels = array_values(array_unique($labels));
 sort($labels, SORT_NUMERIC);
 
-// 3. Map all available gaps
+// 2) Map all available gaps
 $gaps = [];
 for ($i = 0; $i < count($labels) - 1; $i++) {
     $size = $labels[$i + 1] - $labels[$i];
@@ -49,7 +45,12 @@ if ($totalGapsCount === 0) {
     die("No intervals found in the file.\n");
 }
 
-// 4. Selection Logic
+// Helper: pick random element from array
+function pick_random(array $arr) {
+    return $arr[random_int(0, count($arr) - 1)];
+}
+
+// 3) Selection Logic (random tra gli equivalenti)
 $exactMatches = [];
 $biggerGaps   = [];
 $smallerGaps  = [];
@@ -67,19 +68,23 @@ foreach ($gaps as $g) {
 $selection = null;
 
 if (!empty($exactMatches)) {
-    // Priority 1: Exact match found
-    $selection = $exactMatches[0];
+    // Priority 1: Exact match -> scegli a caso tra tutti gli exact
+    $selection = pick_random($exactMatches);
+
 } elseif (!empty($biggerGaps)) {
-    // Priority 2: Smallest among the larger gaps
-    usort($biggerGaps, fn($a, $b) => $a['size'] <=> $b['size']);
-    $selection = $biggerGaps[0];
+    // Priority 2: tra i gap più grandi, prendi la SIZE minima
+    $minSize = min(array_column($biggerGaps, 'size'));
+    $candidates = array_values(array_filter($biggerGaps, fn($g) => $g['size'] === $minSize));
+    $selection = pick_random($candidates);
+
 } elseif (!empty($smallerGaps)) {
-    // Priority 3: Largest among the smaller gaps
-    usort($smallerGaps, fn($a, $b) => $b['size'] <=> $a['size']);
-    $selection = $smallerGaps[0];
+    // Priority 3: tra i gap più piccoli, prendi la SIZE massima
+    $maxSize = max(array_column($smallerGaps, 'size'));
+    $candidates = array_values(array_filter($smallerGaps, fn($g) => $g['size'] === $maxSize));
+    $selection = pick_random($candidates);
 }
 
-// 5. Final Output
+// 4) Final Output
 if ($selection) {
     echo "--- SEARCH RESULT ---\n";
     echo "First element:    " . str_pad((string)$selection['start'], 5, "0", STR_PAD_LEFT) . "\n";
@@ -88,3 +93,4 @@ if ($selection) {
 } else {
     echo "No suitable interval found.\n";
 }
+
