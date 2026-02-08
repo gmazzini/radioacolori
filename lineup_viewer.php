@@ -86,23 +86,14 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE
     table { border-collapse: collapse; width: 100%; table-layout: fixed; }
     th, td { padding: 6px 8px; border: 1px solid #ddd; overflow: hidden; text-overflow: ellipsis; }
 
-    /* UTC + LOCAL: abbastanza larghi per HH:MM:SS e senza "..." */
     th:nth-child(1), td:nth-child(1) { width: 80px; overflow: visible; text-overflow: clip; white-space: nowrap; }  /* UTC */
     th:nth-child(2), td:nth-child(2) { width: 80px; overflow: visible; text-overflow: clip; white-space: nowrap; }  /* LOCAL */
-
-    /* ID: 5 char, centrato e più stretto */
     th:nth-child(3), td:nth-child(3) { width: 55px; text-align: center; }  /* ID */
-
     th:nth-child(6), td:nth-child(6) { width: 70px; }   /* GENRE */
-
-    /* GID: 5 char, centrato e più stretto */
     th:nth-child(7), td:nth-child(7) { width: 55px; text-align: center; }  /* GID */
-
     th:nth-child(8), td:nth-child(8) { width: 50px; }   /* GSEL */
     th:nth-child(9), td:nth-child(9) { width: 55px; }   /* DUR */
     th:nth-child(10), td:nth-child(10){ width: 40px; }  /* SCR */
-
-    /* USED centrato */
     th:nth-child(11), td:nth-child(11){ width: 55px; text-align: center; } /* USED */
 
     .vocal-row { background-color: #ffecec !important; color: #a00; }
