@@ -5,7 +5,7 @@
     <title>Radio a Colori - Live</title>
     <style>
         body { font-family: sans-serif; background: #f4f4f9; padding: 15px; }
-        .container { max-width: 850px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        .container {width:100%;max-width:none;margin:0 auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.1);text-align:center;box-sizing:border-box;}
         .main-logo { height: 120px; margin-bottom: 10px; }
         .top-search { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #ddd; text-align: center; }
         .btn-direct { display: inline-block; background: #d32f2f; color: white !important; padding: 15px 30px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 1.2em; margin: 10px 0; }
