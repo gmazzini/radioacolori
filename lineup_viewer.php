@@ -94,7 +94,7 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE
     th:nth-child(8), td:nth-child(8) { width: 50px; }   /* GSEL */
     th:nth-child(9), td:nth-child(9) { width: 55px; }   /* DUR */
     th:nth-child(10), td:nth-child(10){ width: 40px; }  /* SCR */
-    th:nth-child(11), td:nth-child(11){ width: 55px; text-align: center; } /* USED */
+    th:nth-child(11), td:nth-child(11){ width: 55px; } /* USED */
 
     .vocal-row { background-color: #ffecec !important; color: #a00; }
     .music-row { color: #004085; }
