@@ -70,39 +70,50 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE
 <head>
     <meta charset='utf-8'>
     <title>Lineup Viewer</title>
-    <style>
-        body{font-family: monospace; font-size: 13px; margin: 0; padding: 20px; background: #fff;}
+   <style>
+    body{font-family: monospace; font-size: 13px; margin: 0; padding: 20px; background: #fff;}
 
-        .summary {
-            background: #f8f9fa;
-            padding: 15px;
-            border: 1px solid #ddd;
-            margin-bottom: 20px;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-        
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-        th, td { padding: 6px 8px; border: 1px solid #ddd; overflow: hidden; text-overflow: ellipsis; }
-        th:nth-child(1), td:nth-child(1) { width: 60px; }   /* UTC */
-        th:nth-child(2), td:nth-child(2) { width: 60px; }   /* LOCAL */
-        th:nth-child(3), td:nth-child(3) { width: 70px; }   /* ID */
-        th:nth-child(6), td:nth-child(6) { width: 70px; }   /* GENRE */
-        th:nth-child(7), td:nth-child(7) { width: 50px; }   /* GID */
-        th:nth-child(8), td:nth-child(8) { width: 50px; }   /* GSEL */
-        th:nth-child(9), td:nth-child(9) { width: 55px; }   /* DUR */
-        th:nth-child(10), td:nth-child(10){ width: 40px; }  /* SCR */
-        th:nth-child(11), td:nth-child(11){ width: 55px; }  /* USED */
+    .summary {
+        background: #f8f9fa;
+        padding: 15px;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
 
-        .vocal-row { background-color: #ffecec !important; color: #a00; }
-        .music-row { color: #004085; }
-        .premium { font-weight: bold; background-color: #fff9c4 !important; }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    th, td { padding: 6px 8px; border: 1px solid #ddd; overflow: hidden; text-overflow: ellipsis; }
 
-        .nav { margin-bottom: 10px; }
-        .small { font-size: 11px; color: #666; }
-        .highlight { color: #000; font-weight: bold; }
-    </style>
+    /* UTC + LOCAL: abbastanza larghi per HH:MM:SS e senza "..." */
+    th:nth-child(1), td:nth-child(1) { width: 80px; overflow: visible; text-overflow: clip; white-space: nowrap; }  /* UTC */
+    th:nth-child(2), td:nth-child(2) { width: 80px; overflow: visible; text-overflow: clip; white-space: nowrap; }  /* LOCAL */
+
+    /* ID: 5 char, centrato e più stretto */
+    th:nth-child(3), td:nth-child(3) { width: 55px; text-align: center; }  /* ID */
+
+    th:nth-child(6), td:nth-child(6) { width: 70px; }   /* GENRE */
+
+    /* GID: 5 char, centrato e più stretto */
+    th:nth-child(7), td:nth-child(7) { width: 55px; text-align: center; }  /* GID */
+
+    th:nth-child(8), td:nth-child(8) { width: 50px; }   /* GSEL */
+    th:nth-child(9), td:nth-child(9) { width: 55px; }   /* DUR */
+    th:nth-child(10), td:nth-child(10){ width: 40px; }  /* SCR */
+
+    /* USED centrato */
+    th:nth-child(11), td:nth-child(11){ width: 55px; text-align: center; } /* USED */
+
+    .vocal-row { background-color: #ffecec !important; color: #a00; }
+    .music-row { color: #004085; }
+    .premium { font-weight: bold; background-color: #fff9c4 !important; }
+
+    .nav { margin-bottom: 10px; }
+    .small { font-size: 11px; color: #666; }
+    .highlight { color: #000; font-weight: bold; }
+</style>
+
 </head>
 <body>
 
