@@ -82,19 +82,18 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE
             top: 0;
             z-index: 20;
         }
-
-        table { border-collapse: collapse; width: 100%; }
-        th {
-            position: sticky;
-            top: 65px;
-            background: #333;
-            color: #fff;
-            z-index: 10;
-            padding: 10px;
-            border: 1px solid #444;
-        }
-
-        td { padding: 6px 8px; border: 1px solid #ddd; white-space: nowrap; }
+        
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+        th, td { padding: 6px 8px; border: 1px solid #ddd; overflow: hidden; text-overflow: ellipsis; }
+        th:nth-child(1), td:nth-child(1) { width: 60px; }   /* UTC */
+        th:nth-child(2), td:nth-child(2) { width: 60px; }   /* LOCAL */
+        th:nth-child(3), td:nth-child(3) { width: 70px; }   /* ID */
+        th:nth-child(6), td:nth-child(6) { width: 70px; }   /* GENRE */
+        th:nth-child(7), td:nth-child(7) { width: 50px; }   /* GID */
+        th:nth-child(8), td:nth-child(8) { width: 50px; }   /* GSEL */
+        th:nth-child(9), td:nth-child(9) { width: 55px; }   /* DUR */
+        th:nth-child(10), td:nth-child(10){ width: 40px; }  /* SCR */
+        th:nth-child(11), td:nth-child(11){ width: 55px; }  /* USED */
 
         .vocal-row { background-color: #ffecec !important; color: #a00; }
         .music-row { color: #004085; }
