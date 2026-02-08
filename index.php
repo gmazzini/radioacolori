@@ -184,10 +184,17 @@
         try {
             const data = await searchTrack(id);
             if (data.ok && data.track) {
+                const file = id;
+                const url = "https://radioacolori.net/base/" + encodeURIComponent(file) + ".ogg";
                 showSearchResult(true,
-                    `<b>Trovato:</b> ${escapeHtml(data.track.title)} - ${escapeHtml(data.track.author || "")}`
-                );
-            } else {
+                                 `<b>Trovato:</b> ${escapeHtml(data.track.title)} - ${escapeHtml(data.track.author || "")}<br>` +
+                                 `<audio controls preload="none" style="width:100%; margin-top:8px;">` +
+                                 `<source src="${escapeHtml(url)}" type="audio/ogg">` +
+                                 `Il tuo browser non supporta l'audio.` +
+                                 `</audio>`
+                                );
+            }
+            else {
                 showSearchResult(false, `<b>Non trovato</b>`);
             }
         } catch (e) {
